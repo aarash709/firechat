@@ -1,0 +1,101 @@
+[versions]
+androidGradlePlugin = "8.7.3"
+kotlin = "2.1.0"
+kotlinx-ksp = "2.1.0-1.0.29"
+kotlinx-serialization = "1.8.0"
+kotlinx-coroutines = "1.10.1"
+composeBom = "2025.02.00"
+androidx-coreKtx = "1.15.0"
+androidx-Room = "2.6.1"
+androidx-lifecycleRuntimeKtx = "2.8.7"
+androidx-activityCompose = "1.10.0"
+androidx-macroBenchmark = "1.3.3"
+androidx-navigation = "2.8.7"
+ktor = "3.0.3"
+detekt = "1.23.7"
+kotlinter = "4.5.0"
+gradleSecret = "2.0.1"
+uiautomator = "2.3.0"
+moduleGraph = "2.7.3"
+googleGmsGoogleServices = "4.4.2"
+firebaseBom = "33.9.0"
+koin = "4.0.2"
+timber = "5.0.1"
+
+[libraries]
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-coreKtx" }
+
+#ui
+androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "androidx-lifecycleRuntimeKtx" }
+androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "androidx-lifecycleRuntimeKtx" }
+androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "androidx-activityCompose" }
+androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
+androidx-compose-animation = { group = "androidx.compose.animation", name = "animation" }
+androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation" }
+androidx-compose-ui = { group = "androidx.compose.ui", name = "ui" }
+androidx-compose-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
+androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
+androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
+androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
+androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "androidx-navigation" }
+
+#DI
+koin-android = { group = "io.insert-koin", name = "koin-android", version.ref = "koin" }
+koin-compose = { group = "io.insert-koin", name = "koin-androidx-compose", version.ref = "koin" }
+
+#database
+#androidx-roomCommon = { group = "androidx.room", name = "room-common", version.ref = "androidx-Room" }
+#androidx-roomKtx = { group = "androidx.room", name = "room-ktx", version.ref = "androidx-Room" }
+#androidx-roomCompiler = { group = "androidx.room", name = "room-compiler", version.ref = "androidx-Room" }
+#androidx-roomRuntime = { group = "androidx.room", name = "room-runtime", version.ref = "androidx-Room" }
+
+#network
+#ktor-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktor" }
+#ktor-kotlinxSerilization = { group = "io.ktor", name = "ktor-serialization-kotlinx-json", version.ref = "ktor" }
+#ktor-gsonSerilization = { group = "io.ktor", name = "ktor-serialization-gson", version.ref = "ktor" }
+#ktor-contentNegotiation = { group = "io.ktor", name = "ktor-client-content-negotiation", version.ref = "ktor" }
+#ktor-androidClient = { group = "io.ktor", name = "ktor-client-android", version.ref = "ktor" }
+#ktor-LoggingClient = { group = "io.ktor", name = "ktor-client-logging", version.ref = "ktor" }
+#ktor-ciaoClient = { group = "io.ktor", name = "ktor-client-cio", version.ref = "ktor" }
+#ktor-okhttpClient = { group = "io.ktor", name = "ktor-client-okhttp", version.ref = "ktor" }
+
+#kotlin
+kotlinx-serialization = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
+kotlinx-coroutinesCore = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
+kotlinx-coroutinesAndroid = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "kotlinx-coroutines" }
+
+#
+androidx-benchmark-macro = { group = "androidx.benchmark", name = "benchmark-macro-junit4", version.ref = "androidx-macroBenchmark" }
+timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
+
+
+#firebase
+firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
+firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore" }
+firebase-auth = { group = "com.google.firebase", name = "firebase-auth" }
+
+#build-logic dependecies
+android-gradlePlugin = { group = "com.android.tools.build", name = "gradle", version.ref = "androidGradlePlugin" }
+kotlin-gradlePlugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
+compose_gradleplugin = { group = "org.jetbrains.kotlin", name = "compose-compiler-gradle-plugin", version.ref = "kotlin" }
+androidx-uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "uiautomator" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }
+android-library = { id = "com.android.library", version.ref = "androidGradlePlugin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlinx-ksp = { id = "com.google.devtools.ksp", version.ref = "kotlinx-ksp" }
+compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+baselineprofile = { id = "androidx.baselineprofile", version.ref = "androidx-macroBenchmark" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
+kotlinter = { id = "org.jmailen.kotlinter", version.ref = "kotlinter" }
+secrets = { id = "com.google.android.libraries.mapsplatform.secrets-gradle-plugin", version.ref = "gradleSecret" }
+module-graph = { id = "com.jraska.module.graph.assertion", version.ref = "moduleGraph" }
+google-gms-google-services = { id = "com.google.gms.google-services", version.ref = "googleGmsGoogleServices" }
+
+#custom plugins
+conventionPlugins-android-application = { id = "plugins.android.application", version = "unspecified" }
+conventionPlugins-android-library = { id = "plugins.android.library", version = "unspecified" }
+conventionPlugins-android-compose-application = { id = "plugins.compose.application", version = "unspecified" }
+conventionPlugins-android-compose-library = { id = "plugins.compose.library", version = "unspecified" }
