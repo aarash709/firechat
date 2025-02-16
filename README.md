@@ -24,7 +24,7 @@ This demo application is developed using Kotlin for the Android platform and lev
 - **Firebase Storage**: Used for storing media files such as images and videos shared within chats. _(Backlog)_
 
 ### Screenshots
-
+_soon!_
 ### Upcoming Features
 
 | Feature          | Description                                   | Status/Expected |
