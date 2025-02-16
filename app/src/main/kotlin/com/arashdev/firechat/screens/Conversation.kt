@@ -2,22 +2,27 @@ package com.arashdev.firechat.screens
 
 
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.NightlightRound
+import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Menu
@@ -156,11 +161,13 @@ private fun ConversationsDrawer(
 	var isChecked by remember {
 		mutableStateOf(false)
 	}
-	ModalDrawerSheet {
+	val inDarkMode = isSystemInDarkTheme()
+	ModalDrawerSheet(modifier = Modifier, windowInsets = WindowInsets(0, 0, 0, 0)) {
 		Card(modifier = Modifier) {
 			Column(
 				modifier = Modifier
 					.fillMaxWidth()
+					.statusBarsPadding()
 					.padding(horizontal = 16.dp, vertical = 16.dp),
 				verticalArrangement = Arrangement.spacedBy(8.dp)
 			) {
@@ -176,10 +183,25 @@ private fun ConversationsDrawer(
 							.size(60.dp),
 						contentDescription = "profile picture"
 					)
-					Switch(checked = isChecked, onCheckedChange = {
-						isChecked = it
-						onThemeSwitch(it)
-					})
+					Switch(
+						checked = !inDarkMode,
+						onCheckedChange = {
+							isChecked = it
+							onThemeSwitch(it)
+						},
+						thumbContent = {
+							if (inDarkMode)
+								Icon(
+									imageVector = Icons.Default.NightlightRound,
+									contentDescription = ""
+								)
+							else
+								Icon(
+									imageVector = Icons.Default.WbSunny,
+									contentDescription = ""
+								)
+
+						})
 				}
 				Text(text = name, style = MaterialTheme.typography.titleLarge)
 				Text(
@@ -278,7 +300,8 @@ fun ConversationItem(
 			verticalAlignment = Alignment.CenterVertically,
 			horizontalArrangement = Arrangement.SpaceBetween
 		) {
-			Row(modifier = Modifier.weight(4f),
+			Row(
+				modifier = Modifier.weight(4f),
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 				verticalAlignment = Alignment.CenterVertically
 			) {
@@ -302,7 +325,9 @@ fun ConversationItem(
 			Row(
 				horizontalArrangement = Arrangement.End,
 				verticalAlignment = Alignment.CenterVertically,
-				modifier = Modifier.height(IntrinsicSize.Max).weight(1.5f),
+				modifier = Modifier
+					.height(IntrinsicSize.Max)
+					.weight(1.5f),
 			) {
 				Icon(
 					imageVector = Icons.Default.Check,
@@ -317,7 +342,7 @@ fun ConversationItem(
 @Composable
 fun EmptyConversation(modifier: Modifier = Modifier) {
 	Column(
-		modifier = Modifier.fillMaxWidth(),
+		modifier = modifier.fillMaxWidth(),
 		horizontalAlignment = Alignment.CenterHorizontally,
 		verticalArrangement = Arrangement.Center
 	) {
