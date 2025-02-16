@@ -1,5 +1,5 @@
 [versions]
-androidGradlePlugin = "8.7.3"
+androidGradlePlugin = "8.8.1"
 kotlin = "2.1.10"
 kotlinx-ksp = "2.1.10-1.0.30"
 kotlinx-serialization = "1.8.0"
