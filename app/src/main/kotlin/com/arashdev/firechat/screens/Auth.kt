@@ -32,7 +32,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import com.arashdev.firechat.designsystem.ChatComposeTheme
+import com.arashdev.firechat.designsystem.FireChatTheme
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -167,7 +167,7 @@ fun AuthContent(
 @PreviewLightDark
 @Composable
 private fun AuthPreview() {
-	ChatComposeTheme {
+	FireChatTheme {
 		val uiState by remember {
 			mutableStateOf(AuthUiState.Initial)
 		}

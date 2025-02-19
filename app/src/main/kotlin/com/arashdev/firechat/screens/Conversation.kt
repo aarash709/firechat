@@ -62,7 +62,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.arashdev.firechat.R
-import com.arashdev.firechat.designsystem.ChatComposeTheme
+import com.arashdev.firechat.designsystem.FireChatTheme
 import com.arashdev.firechat.model.Conversation
 import com.arashdev.firechat.utils.formatUtcToLocalTime
 import kotlinx.coroutines.launch
@@ -355,7 +355,7 @@ fun EmptyConversation(modifier: Modifier = Modifier) {
 @PreviewLightDark
 @Composable
 private fun ConversationsPreview() {
-	ChatComposeTheme {
+	FireChatTheme {
 		ConversationsScreen(
 			onAddNewConversation = {},
 			onConversationClick = {},
