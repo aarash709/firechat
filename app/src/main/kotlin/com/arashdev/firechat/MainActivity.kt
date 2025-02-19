@@ -4,7 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import com.arashdev.firechat.designsystem.ChatComposeTheme
+import com.arashdev.firechat.designsystem.FireChatTheme
 
 class MainActivity : ComponentActivity() {
 
@@ -12,7 +12,7 @@ class MainActivity : ComponentActivity() {
 		super.onCreate(savedInstanceState)
 		enableEdgeToEdge()
 		setContent {
-			ChatComposeTheme {
+			FireChatTheme {
 				AppNavigation()
 			}
 		}

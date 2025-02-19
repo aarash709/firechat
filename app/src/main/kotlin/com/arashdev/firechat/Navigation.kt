@@ -15,7 +15,7 @@ import com.arashdev.firechat.screens.ChatScreen
 import com.arashdev.firechat.screens.ContactProfile
 import com.arashdev.firechat.screens.ContactsListScreen
 import com.arashdev.firechat.screens.ConversationsScreen
-import com.arashdev.firechat.screens.Profile
+import com.arashdev.firechat.screens.EditProfile
 import com.arashdev.firechat.screens.Settings
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
@@ -90,7 +90,7 @@ fun AppNavigation() {
 		composable<Profile>(
 			enterTransition = { slideInHorizontally(tween(transitionTime)) { it } },
 			exitTransition = { slideOutHorizontally(tween(transitionTime)) { it } }
-		) { Profile { navController.popBackStack() } }
+		) { EditProfile { navController.popBackStack() } }
 		composable<ChatProfile> { ContactProfile { navController.popBackStack() } }
 		composable<Settings>(enterTransition = { slideInHorizontally(tween(transitionTime)) { it } },
 			exitTransition = { slideOutHorizontally(tween(transitionTime)) { it } }) { Settings { navController.popBackStack() } }
