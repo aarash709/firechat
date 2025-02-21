@@ -56,11 +56,17 @@ class AuthServiceImpl : AuthService {
 	}
 
 	private fun FirebaseUser?.toUser(): User {
+		val userName = if (this?.isAnonymous == true) {
+			"Anonymous"
+		} else {
+			this?.displayName.orEmpty()
+		}
 		return User(
 			userId = this?.uid ?: "",
-			name = this?.displayName.orEmpty(),
-			createdAt = this?.metadata?.creationTimestamp ?: 0
-
+			name = userName,
+			createdAt = this?.metadata?.creationTimestamp ?: 0,
+			isAnonymous = this?.isAnonymous ?: false,
+			bio = ""
 		)
 	}
 }
