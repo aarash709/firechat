@@ -52,10 +52,10 @@ class RemoteStorageServiceImpl(private val authService: AuthService) : RemoteSto
 
 	}
 
-	override suspend fun createUser(userId: String) {
+	override suspend fun createUser(userId: String, userName: String) {
 		val user = hashMapOf(
 			"userId" to userId,
-			"name" to "Anonymous User",
+			"name" to userName.ifEmpty { "Anonymous User" },
 			"createdAt" to Instant.now().epochSecond //utc
 		)
 		Firebase.firestore.collection(CONTACTS_COLLECTION)

@@ -32,7 +32,16 @@ fun AppNavigation() {
 		navController = navController,
 		startDestination = if (isLoggedIn) Conversations else Auth
 	) {
-		composable<Auth> { AuthScreen { navController.navigate(Conversations) } }
+		composable<Auth> {
+			AuthScreen {
+				navController.navigate(Conversations) {
+					launchSingleTop = true
+					popUpTo(Auth){
+						inclusive = true
+					}
+				}
+			}
+		}
 		composable<Chat>(
 			enterTransition = { slideInHorizontally(tween(transitionTime)) { it } },
 			exitTransition = { slideOutHorizontally(tween(transitionTime)) { it } }

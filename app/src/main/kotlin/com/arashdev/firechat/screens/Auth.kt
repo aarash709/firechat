@@ -12,11 +12,10 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -25,7 +24,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
@@ -36,14 +34,15 @@ import com.arashdev.firechat.designsystem.FireChatTheme
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun AuthScreen(viewModel: AuthViewModel = koinViewModel(), onNavigateToChat: () -> Unit) {
+fun AuthScreen(viewModel: AuthViewModel = koinViewModel(), onNavigateToConversations: () -> Unit) {
 	val uiState = viewModel.uiState.value
 	AuthContent(
 		uiState = uiState,
-		onSignupWithEmailPassword = {
+		onSignInWithEmailPassword = { email, password ->
+			viewModel.signInWithEmailAndPassword(email = email, password = password)
 		},
-		onNavigateToChat = { onNavigateToChat() },
-		onSignupAnonymously = { viewModel.signInAnonymously() }
+		onNavigateToConversations = { onNavigateToConversations() },
+		onSignInAnonymously = { viewModel.signInAnonymously() }
 	)
 }
 
@@ -51,10 +50,11 @@ fun AuthScreen(viewModel: AuthViewModel = koinViewModel(), onNavigateToChat: () 
 fun AuthContent(
 	modifier: Modifier = Modifier,
 	uiState: AuthUiState,
-	onSignupWithEmailPassword: () -> Unit,
-	onSignupAnonymously: () -> Unit,
-	onNavigateToChat: () -> Unit
+	onSignInWithEmailPassword: (String, String) -> Unit,
+	onSignInAnonymously: () -> Unit,
+	onNavigateToConversations: () -> Unit
 ) {
+	var name by remember { mutableStateOf("") }
 	var email by remember { mutableStateOf("") }
 	var password by remember { mutableStateOf("") }
 	val focusManager = LocalFocusManager.current
@@ -68,7 +68,27 @@ fun AuthContent(
 		) {
 			val isEnabled = uiState != AuthUiState.Loading
 			Spacer(Modifier.height(32.dp))
-			TextField(
+			OutlinedTextField(
+				value = name,
+				enabled = isEnabled,
+				onValueChange = { name = it },
+				label = { Text("Name") },
+				keyboardActions = KeyboardActions(onNext = {
+					focusManager.moveFocus(FocusDirection.Down)
+				}),
+				keyboardOptions = KeyboardOptions(
+					showKeyboardOnFocus = true,
+					keyboardType = KeyboardType.Email,
+					imeAction = ImeAction.Next
+				),
+//				colors = TextFieldDefaults.colors(
+//					focusedIndicatorColor = Color.Transparent,
+//					errorIndicatorColor = Color.Transparent,
+//					disabledIndicatorColor = Color.Transparent,
+//					unfocusedIndicatorColor = Color.Transparent
+//				)
+			)
+			OutlinedTextField(
 				value = email,
 				enabled = isEnabled,
 				onValueChange = { email = it },
@@ -81,15 +101,15 @@ fun AuthContent(
 					keyboardType = KeyboardType.Email,
 					imeAction = ImeAction.Next
 				),
-				colors = TextFieldDefaults.colors(
-					focusedIndicatorColor = Color.Transparent,
-					errorIndicatorColor = Color.Transparent,
-					disabledIndicatorColor = Color.Transparent,
-					unfocusedIndicatorColor = Color.Transparent
-				)
+//				colors = TextFieldDefaults.colors(
+//					focusedIndicatorColor = Color.Transparent,
+//					errorIndicatorColor = Color.Transparent,
+//					disabledIndicatorColor = Color.Transparent,
+//					unfocusedIndicatorColor = Color.Transparent
+//				)
 			)
 			Spacer(Modifier.height(8.dp))
-			TextField(
+			OutlinedTextField(
 				value = password,
 				enabled = isEnabled,
 				onValueChange = { password = it },
@@ -102,25 +122,25 @@ fun AuthContent(
 					keyboardType = KeyboardType.Password,
 					imeAction = ImeAction.Done
 				),
-				colors = TextFieldDefaults.colors(
-					focusedIndicatorColor = Color.Transparent,
-					errorIndicatorColor = Color.Transparent,
-					disabledIndicatorColor = Color.Transparent,
-					unfocusedIndicatorColor = Color.Transparent
-				)
+//				colors = TextFieldDefaults.colors(
+//					focusedIndicatorColor = Color.Transparent,
+//					errorIndicatorColor = Color.Transparent,
+//					disabledIndicatorColor = Color.Transparent,
+//					unfocusedIndicatorColor = Color.Transparent
+//				)
 			)
 			Spacer(Modifier.height(8.dp))
 			Row {
 				Button(
 					onClick = {
-						onSignupWithEmailPassword()
+						onSignInWithEmailPassword(email, password)
 					},
 					enabled = isEnabled
 				) {
 					AnimatedContent(uiState) {
 						when (it) {
 							AuthUiState.Initial, is AuthUiState.Error -> {
-								Text("Sign up")
+								Text("Sign in")
 							}
 
 							AuthUiState.Loading -> {
@@ -128,7 +148,7 @@ fun AuthContent(
 							}
 
 							AuthUiState.Success -> {
-								onNavigateToChat()
+								onNavigateToConversations()
 							}
 						}
 					}
@@ -139,7 +159,7 @@ fun AuthContent(
 			}
 			TextButton(
 				onClick = {
-					onSignupAnonymously()
+					onSignInAnonymously()
 				},
 				enabled = isEnabled
 			) {
@@ -154,7 +174,7 @@ fun AuthContent(
 						}
 
 						AuthUiState.Success -> {
-							onNavigateToChat()
+//							onNavigateToConversations()
 						}
 					}
 				}
@@ -173,8 +193,9 @@ private fun AuthPreview() {
 		}
 		AuthContent(
 			uiState = uiState,
-			onSignupWithEmailPassword = {},
-			onNavigateToChat = {},
-			onSignupAnonymously = {})
+			onNavigateToConversations = {},
+			onSignInAnonymously = {},
+			onSignInWithEmailPassword = { _, _ -> }
+		)
 	}
 }

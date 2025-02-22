@@ -20,7 +20,7 @@ interface RemoteStorageService {
 		otherContactId: String
 	)
 
-	suspend fun createUser(userId: String)
+	suspend fun createUser(userId: String, userName: String = "")
 
 	suspend fun updateUsername(userName: String, userId: String)
 

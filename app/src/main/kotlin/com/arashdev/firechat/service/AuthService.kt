@@ -13,13 +13,15 @@ interface AuthService {
 
 	suspend fun createAnonymousAccount()
 
+	suspend fun createNewAccount(email: String, password: String)
+
 	fun hasUser() : Boolean
 
 	suspend fun deleteAccount()
 
 	suspend fun linkAccount(email: String, password: String)
 
-	suspend fun signIn(email: String, password: String)
+	suspend fun signInWithEmailAndPassword(email: String, password: String)
 
 	suspend fun signOut()
 

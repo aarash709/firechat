@@ -39,6 +39,10 @@ class AuthServiceImpl : AuthService {
 		Firebase.auth.signInAnonymously().await()
 	}
 
+	override suspend fun createNewAccount(email: String, password: String) {
+		Firebase.auth.createUserWithEmailAndPassword(email,password)
+	}
+
 	override suspend fun deleteAccount() {
 		Firebase.auth.currentUser?.delete()?.await()
 	}
@@ -48,8 +52,9 @@ class AuthServiceImpl : AuthService {
 		Firebase.auth.currentUser!!.linkWithCredential(credential).await()
 	}
 
-	override suspend fun signIn(email: String, password: String) {
-		Firebase.auth.signInWithEmailAndPassword(email, password).await()
+	override suspend fun signInWithEmailAndPassword(email: String, password: String) {
+		val provider = EmailAuthProvider.getCredential(email,password)
+		Firebase.auth.signInWithCredential(provider).await()
 	}
 
 	override suspend fun signOut() {
