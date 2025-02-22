@@ -60,8 +60,10 @@ fun AppNavigation() {
 			}) {
 			ContactsListScreen(onUserSelected = { userID ->
 				navController.navigate(Chat(otherUserID = userID)) {
+					launchSingleTop = true
 					popUpTo(Contacts) {
 						inclusive = true
+
 					}
 				}
 			},
@@ -93,7 +95,19 @@ fun AppNavigation() {
 		) { EditProfile { navController.popBackStack() } }
 		composable<ChatProfile> { ContactProfile { navController.popBackStack() } }
 		composable<Settings>(enterTransition = { slideInHorizontally(tween(transitionTime)) { it } },
-			exitTransition = { slideOutHorizontally(tween(transitionTime)) { it } }) { Settings { navController.popBackStack() } }
+			exitTransition = { slideOutHorizontally(tween(transitionTime)) { it } }) {
+			Settings(
+				onNavigateBack = {
+					navController.navigate(Auth) {
+						popUpTo(Auth) {
+							inclusive = true
+						}
+
+					}
+				},
+				onLogout = { navController.navigate(Auth) }
+			) { navController.popBackStack() }
+		}
 	}
 }
 

@@ -22,4 +22,6 @@ interface AuthService {
 	suspend fun signIn(email: String, password: String)
 
 	suspend fun signOut()
+
+	suspend fun updateDisplayName(name: String)
 }

@@ -4,6 +4,7 @@ import com.arashdev.firechat.model.User
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.channels.awaitClose
@@ -53,6 +54,13 @@ class AuthServiceImpl : AuthService {
 
 	override suspend fun signOut() {
 		Firebase.auth.signOut()
+	}
+
+	override suspend fun updateDisplayName(name: String) {
+		Firebase.auth.currentUser?.updateProfile(
+			UserProfileChangeRequest.Builder()
+				.setDisplayName(name).build()
+		)
 	}
 
 	private fun FirebaseUser?.toUser(): User {

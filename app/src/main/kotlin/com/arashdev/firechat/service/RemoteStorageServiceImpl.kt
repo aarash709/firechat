@@ -5,6 +5,7 @@ import com.arashdev.firechat.model.Message
 import com.arashdev.firechat.model.User
 import com.arashdev.firechat.utils.getConversationId
 import com.google.firebase.auth.ktx.auth
+import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.dataObjects
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
@@ -69,6 +70,11 @@ class RemoteStorageServiceImpl(private val authService: AuthService) : RemoteSto
 
 	}
 
+	override suspend fun updateUsername(userName: String, userId: String) {
+		Firebase.firestore.collection(CONTACTS_COLLECTION).document(userId)
+			.set(hashMapOf("name" to userName), SetOptions.merge()).await()
+	}
+
 	override suspend fun createConversation(
 		message: String,
 		currentUserId: String,
@@ -96,6 +102,10 @@ class RemoteStorageServiceImpl(private val authService: AuthService) : RemoteSto
 				onConversationCreationSuccessfull()
 			}
 
+	}
+
+	override suspend fun removeUserData(userId: String) {
+		Firebase.firestore.collection(CONTACTS_COLLECTION).document(userId).delete().await()
 	}
 
 	companion object {

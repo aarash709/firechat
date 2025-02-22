@@ -25,6 +25,7 @@ import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -32,9 +33,11 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -45,6 +48,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -57,6 +61,8 @@ fun Settings(
 	modifier: Modifier = Modifier,
 	viewModel: SettingsViewModel = koinViewModel(),
 	onNavigateBack: () -> Unit,
+	onLogout: () -> Unit,
+	onDeleteAccount: () -> Unit
 ) {
 	val user by viewModel.user.collectAsStateWithLifecycle()
 	Box(
@@ -67,19 +73,82 @@ fun Settings(
 	) {
 		var showDeleteAccountDialog by remember { mutableStateOf(false) }
 		var showLogoutDialog by remember { mutableStateOf(false) }
+		var showLinkAccountDialog by remember { mutableStateOf(false) }
+		if (showLinkAccountDialog) {
+			var email by remember { mutableStateOf("") }
+			var password by remember { mutableStateOf("") }
+			var name by remember { mutableStateOf("") }
+			AlertDialog(
+				onDismissRequest = { showLinkAccountDialog = !showLinkAccountDialog },
+				modifier = Modifier,
+				title = { Text("Submit your Email and password") },
+				text = {
+					Column {
+						OutlinedTextField(
+							value = email,
+							label = { Text("Email") },
+							onValueChange = { email = it },
+							maxLines = 1,
+							singleLine = true
+						)
+						OutlinedTextField(
+							value = password,
+							label = { Text("Password") },
+							onValueChange = { password = it },
+							visualTransformation = PasswordVisualTransformation(),
+							maxLines = 1,
+							singleLine = true
+						)
+						OutlinedTextField(
+							value = name,
+							label = { Text("Name") },
+							onValueChange = {
+								if (it.length <= 20) {
+									name = it
+								}
+							},
+							maxLines = 1,
+							singleLine = true
+						)
+					}
+				},
+				confirmButton = {
+					Button(
+						onClick = {
+							viewModel.linkAccount(
+								email = email,
+								password = password,
+								displayName = name
+							)
+						},
+						enabled = email.isNotEmpty() && password.isNotEmpty() && name.isNotEmpty()
+					) {
+						Text("Link Account")
+					}
+				},
+				dismissButton = {
+					TextButton(onClick = { showLinkAccountDialog = !showLinkAccountDialog }) {
+						Text("Dismiss")
+					}
+				}
+			)
+		}
 		if (showDeleteAccountDialog) {
 			AlertDialog(
 				onDismissRequest = { showDeleteAccountDialog = !showDeleteAccountDialog },
 				title = { Text("Delete Account?") },
 				modifier = Modifier,
 				confirmButton = {
-					IconButton(onClick = {/*delete account*/ }) {
-						Text("Yes")
+					Button(onClick = {
+						viewModel.deleteAccount()
+						onDeleteAccount()
+					}) {
+						Text("Delete")
 					}
 				},
 				dismissButton = {
-					IconButton(onClick = { showDeleteAccountDialog = !showDeleteAccountDialog }) {
-						Text("No")
+					TextButton(onClick = { showDeleteAccountDialog = !showDeleteAccountDialog }) {
+						Text("Dismiss")
 					}
 				}
 			)
@@ -90,13 +159,16 @@ fun Settings(
 				title = { Text("Logout?") },
 				modifier = Modifier,
 				confirmButton = {
-					IconButton(onClick = {/*logout?*/ }) {
-						Text("Yes")
+					Button(onClick = {
+						viewModel.logout()
+						onLogout()
+					}) {
+						Text("Logout")
 					}
 				},
 				dismissButton = {
-					IconButton(onClick = { showLogoutDialog = !showLogoutDialog }) {
-						Text("No")
+					TextButton(onClick = { showLogoutDialog = !showLogoutDialog }) {
+						Text("Dismiss")
 					}
 				}
 			)
@@ -104,7 +176,7 @@ fun Settings(
 		SettingsContent(modifier = Modifier, user, onNavigateBack = { onNavigateBack() },
 			onLogout = { showLogoutDialog = !showLogoutDialog },
 			onDeleteAccount = { showDeleteAccountDialog = !showDeleteAccountDialog },
-			onLinkAccount = { })
+			onLinkAccount = { showLinkAccountDialog = !showLinkAccountDialog })
 	}
 }
 
@@ -160,20 +232,21 @@ fun SettingsContent(
 									)
 								})
 						}
-						DropdownMenuItem(text = {
-							Text(
-								"Log out",
-								color = MaterialTheme.colorScheme.error
-							)
-						},
+						DropdownMenuItem(
+							text = {
+								Text(
+									text = "Log out",
+								)
+							},
 							onClick = { onLogout() },
 							leadingIcon = {
 								Icon(
 									imageVector = Icons.AutoMirrored.Outlined.Logout,
 									contentDescription = "logout icon",
-									tint = MaterialTheme.colorScheme.error
 								)
-							})
+							},
+							enabled = !user.isAnonymous
+						)
 						DropdownMenuItem(
 							text = {
 								Text(

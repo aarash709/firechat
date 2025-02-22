@@ -7,12 +7,15 @@ import com.arashdev.firechat.service.AuthService
 import com.arashdev.firechat.service.RemoteStorageService
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import timber.log.Timber
 
 class SettingsViewModel(
 	private val auth: AuthService,
 	private val remoteStorage: RemoteStorageService
-) :
-	ViewModel() {
+) : ViewModel() {
+
+	private val userId = auth.currentUserId
 
 	val user = auth.currentUser.stateIn(
 		scope = viewModelScope,
@@ -20,5 +23,34 @@ class SettingsViewModel(
 		initialValue = User()
 	)
 
-	val storage = remoteStorage.messages
+	fun deleteAccount() {
+		viewModelScope.launch {
+			auth.deleteAccount()
+			remoteStorage.removeUserData(userId)
+		}
+	}
+
+	fun logout() {
+		viewModelScope.launch {
+			auth.signOut()
+		}
+	}
+
+	fun linkAccount(email: String, password: String, displayName: String) {
+		viewModelScope.launch {
+			try {
+				auth.linkAccount(email = email, password = password)
+				auth.updateDisplayName(displayName)
+				remoteStorage.updateUsername(displayName, userId)
+			} catch (e: Exception) {
+				Timber.e("Account link Error ${e.message}")
+			}
+		}
+	}
+
+	fun updateDisplayName(name: String) {
+		viewModelScope.launch {
+			remoteStorage.updateUsername(userName = name, userId = userId)
+		}
+	}
 }
