@@ -15,12 +15,18 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
+import androidx.compose.material.icons.outlined.DeleteForever
 import androidx.compose.material.icons.outlined.Language
+import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -33,6 +39,9 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -47,7 +56,7 @@ import org.koin.androidx.compose.koinViewModel
 fun Settings(
 	modifier: Modifier = Modifier,
 	viewModel: SettingsViewModel = koinViewModel(),
-	onNavigateBack: () -> Unit
+	onNavigateBack: () -> Unit,
 ) {
 	val user by viewModel.user.collectAsStateWithLifecycle()
 	Box(
@@ -56,13 +65,59 @@ fun Settings(
 			.background(MaterialTheme.colorScheme.surface),
 		contentAlignment = Alignment.Center
 	) {
-		SettingsContent(modifier = Modifier, user, onNavigateBack = { onNavigateBack() })
+		var showDeleteAccountDialog by remember { mutableStateOf(false) }
+		var showLogoutDialog by remember { mutableStateOf(false) }
+		if (showDeleteAccountDialog) {
+			AlertDialog(
+				onDismissRequest = { showDeleteAccountDialog = !showDeleteAccountDialog },
+				title = { Text("Delete Account?") },
+				modifier = Modifier,
+				confirmButton = {
+					IconButton(onClick = {/*delete account*/ }) {
+						Text("Yes")
+					}
+				},
+				dismissButton = {
+					IconButton(onClick = { showDeleteAccountDialog = !showDeleteAccountDialog }) {
+						Text("No")
+					}
+				}
+			)
+		}
+		if (showLogoutDialog) {
+			AlertDialog(
+				onDismissRequest = { showLogoutDialog = !showLogoutDialog },
+				title = { Text("Logout?") },
+				modifier = Modifier,
+				confirmButton = {
+					IconButton(onClick = {/*logout?*/ }) {
+						Text("Yes")
+					}
+				},
+				dismissButton = {
+					IconButton(onClick = { showLogoutDialog = !showLogoutDialog }) {
+						Text("No")
+					}
+				}
+			)
+		}
+		SettingsContent(modifier = Modifier, user, onNavigateBack = { onNavigateBack() },
+			onLogout = { showLogoutDialog = !showLogoutDialog },
+			onDeleteAccount = { showDeleteAccountDialog = !showDeleteAccountDialog },
+			onLinkAccount = { })
 	}
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsContent(modifier: Modifier = Modifier, user: User, onNavigateBack: () -> Unit) {
+fun SettingsContent(
+	modifier: Modifier = Modifier,
+	user: User,
+	onNavigateBack: () -> Unit,
+	onLinkAccount: () -> Unit,
+	onLogout: () -> Unit,
+	onDeleteAccount: () -> Unit
+) {
 	Scaffold(modifier = modifier, topBar = {
 		TopAppBar(
 			modifier = modifier.padding(horizontal = 0.dp),
@@ -75,12 +130,66 @@ fun SettingsContent(modifier: Modifier = Modifier, user: User, onNavigateBack: (
 					)
 				}
 			}, actions = {
-				IconButton(onClick = {
-				}) {
-					Icon(
-						imageVector = Icons.Default.MoreVert,
-						contentDescription = "conversations menu"
-					)
+				var expanded by remember {
+					mutableStateOf(false)
+				}
+				Box {
+					IconButton(onClick = {
+						expanded = !expanded
+					}) {
+						Icon(
+							imageVector = Icons.Default.MoreVert,
+							contentDescription = "conversations menu"
+						)
+					}
+					DropdownMenu(
+						expanded = expanded,
+						onDismissRequest = { expanded = !expanded },
+						tonalElevation = 4.dp,
+						shadowElevation = 8.dp,
+						containerColor = MaterialTheme.colorScheme.surface
+					) {
+						if (user.isAnonymous) {
+							DropdownMenuItem(
+								text = { Text("Link Account") },
+								onClick = { onLinkAccount() },
+								leadingIcon = {
+									Icon(
+										imageVector = Icons.Outlined.Link,
+										contentDescription = "link account icon"
+									)
+								})
+						}
+						DropdownMenuItem(text = {
+							Text(
+								"Log out",
+								color = MaterialTheme.colorScheme.error
+							)
+						},
+							onClick = { onLogout() },
+							leadingIcon = {
+								Icon(
+									imageVector = Icons.AutoMirrored.Outlined.Logout,
+									contentDescription = "logout icon",
+									tint = MaterialTheme.colorScheme.error
+								)
+							})
+						DropdownMenuItem(
+							text = {
+								Text(
+									"Delete Account",
+									color = MaterialTheme.colorScheme.error
+								)
+							},
+							onClick = { onDeleteAccount() },
+							leadingIcon = {
+								Icon(
+									imageVector = Icons.Outlined.DeleteForever,
+									contentDescription = "delete icon",
+									tint = MaterialTheme.colorScheme.error
+								)
+							})
+					}
 				}
 			},
 			colors = TopAppBarDefaults.topAppBarColors(
@@ -245,13 +354,17 @@ private fun SettingsItem(icon: ImageVector, title: String, onSettingItemClick: (
 private fun SettingsPreview() {
 	FireChatTheme {
 		SettingsContent(
+			modifier = Modifier,
 			onNavigateBack = {},
 			user = User(
 				name = "Jack",
 				userId = "asdfpoiho212",
 				isAnonymous = false,
-				bio = "Very nice person doing great things"
-			)
+				bio = "Very nice person doing great things",
+			),
+			onLogout = {},
+			onDeleteAccount = {},
+			onLinkAccount = {}
 		)
 	}
 }
