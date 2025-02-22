@@ -120,6 +120,7 @@ fun Settings(
 								password = password,
 								displayName = name
 							)
+							showLinkAccountDialog = !showLinkAccountDialog
 						},
 						enabled = email.isNotEmpty() && password.isNotEmpty() && name.isNotEmpty()
 					) {
@@ -140,6 +141,7 @@ fun Settings(
 				modifier = Modifier,
 				confirmButton = {
 					Button(onClick = {
+						showDeleteAccountDialog = !showDeleteAccountDialog
 						viewModel.deleteAccount()
 						onDeleteAccount()
 					}) {
@@ -160,6 +162,7 @@ fun Settings(
 				modifier = Modifier,
 				confirmButton = {
 					Button(onClick = {
+						showLogoutDialog = !showLogoutDialog
 						viewModel.logout()
 						onLogout()
 					}) {
@@ -224,7 +227,10 @@ fun SettingsContent(
 						if (user.isAnonymous) {
 							DropdownMenuItem(
 								text = { Text("Link Account") },
-								onClick = { onLinkAccount() },
+								onClick = {
+									expanded = !expanded
+									onLinkAccount()
+								},
 								leadingIcon = {
 									Icon(
 										imageVector = Icons.Outlined.Link,
@@ -238,7 +244,10 @@ fun SettingsContent(
 									text = "Log out",
 								)
 							},
-							onClick = { onLogout() },
+							onClick = {
+								expanded = !expanded
+								onLogout()
+							},
 							leadingIcon = {
 								Icon(
 									imageVector = Icons.AutoMirrored.Outlined.Logout,
@@ -254,7 +263,10 @@ fun SettingsContent(
 									color = MaterialTheme.colorScheme.error
 								)
 							},
-							onClick = { onDeleteAccount() },
+							onClick = {
+								expanded = !expanded
+								onDeleteAccount()
+							},
 							leadingIcon = {
 								Icon(
 									imageVector = Icons.Outlined.DeleteForever,

@@ -36,7 +36,7 @@ fun AppNavigation() {
 			AuthScreen {
 				navController.navigate(Conversations) {
 					launchSingleTop = true
-					popUpTo(Auth){
+					popUpTo(Auth) {
 						inclusive = true
 					}
 				}
@@ -107,15 +107,25 @@ fun AppNavigation() {
 			exitTransition = { slideOutHorizontally(tween(transitionTime)) { it } }) {
 			Settings(
 				onNavigateBack = {
+					navController.popBackStack()
+				},
+				onLogout = {
+					navController.navigate(Auth) {
+						launchSingleTop = true
+						popUpTo(Auth) {
+							inclusive = true
+						}
+					}
+				},
+				onDeleteAccount = {
 					navController.navigate(Auth) {
 						popUpTo(Auth) {
 							inclusive = true
 						}
 
 					}
-				},
-				onLogout = { navController.navigate(Auth) }
-			) { navController.popBackStack() }
+				}
+			)
 		}
 	}
 }
