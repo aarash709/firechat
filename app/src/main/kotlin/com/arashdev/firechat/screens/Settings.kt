@@ -1,13 +1,15 @@
 package com.arashdev.firechat.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -23,20 +25,16 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
@@ -114,11 +112,16 @@ fun SettingsContent(modifier: Modifier = Modifier, user: User, onNavigateBack: (
 					Text(user.name, style = MaterialTheme.typography.headlineMedium)
 				}
 			}
-			AccountInfo(user = user)
-			HorizontalDivider(Modifier.padding(4.dp))
+			AccountInfo(user = user, onClick = {})
+			Spacer(Modifier.height(8.dp))
+			Text(
+				text = "Settings",
+				modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+				style = MaterialTheme.typography.titleSmall,
+			)
 			LazyColumn(
-				verticalArrangement = Arrangement.Center,
-				modifier = Modifier
+				verticalArrangement = Arrangement.Top,
+				modifier = Modifier.fillMaxSize()
 			) {
 				item {
 					SettingsItem(
@@ -159,106 +162,61 @@ fun SettingsContent(modifier: Modifier = Modifier, user: User, onNavigateBack: (
 }
 
 @Composable
-private fun AccountInfo(modifier: Modifier = Modifier, user: User) {
-	Surface(modifier = modifier) {
-		Column(modifier = Modifier.padding(16.dp)) {
-//			ListItem(
-//				overlineContent = {
-//					Text(
-//						"Account",
-//						color = MaterialTheme.colorScheme.onSurfaceVariant
-//					)
-//				},
-//				headlineContent = { Text(if (user.isAnonymous) "Anonymous Account" else user.name) })
-			SettingAccountInfoItem(
-				type = "Account",
-				text = if (user.isAnonymous) "Anonymous Account" else user.name
+private fun AccountInfo(modifier: Modifier = Modifier, user: User, onClick: () -> Unit) {
+	Surface(modifier = modifier, shadowElevation = 4.dp) {
+		val linePadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
+		Column(modifier = Modifier) {
+			Spacer(Modifier.height(8.dp))
+			Text(
+				text = "Account",
+				modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+				style = MaterialTheme.typography.titleSmall,
 			)
-//			Column {
-//				Text(
-//					"Account",
-//					color = MaterialTheme.colorScheme.onSurfaceVariant
-//				)
-//
-//				Text(if (user.isAnonymous) "Anonymous Account" else user.name)
-//			}
-//			Text("Account")
-//			Text(
-//				text = if (user.isAnonymous) "Anonymous Account" else "",
-//				modifier = Modifier,
-//				style = MaterialTheme.typography.titleSmall,
-//				color = MaterialTheme.colorScheme.onSurfaceVariant,
-//				maxLines = 1
-//			)
-//			TextField(
-//				modifier = Modifier.fillMaxWidth(),
-//				value = if (user.isAnonymous) "Anonymous Account" else "", onValueChange = { it },
-//				colors = TextFieldDefaults.colors(
-//					focusedIndicatorColor = Color.Transparent,
-//					errorIndicatorColor = Color.Transparent,
-//					disabledIndicatorColor = Color.Transparent,
-//					unfocusedIndicatorColor = Color.Transparent
-//				),
-//				maxLines = 1,
-//			)
-			HorizontalDivider(Modifier.padding(4.dp))
+			SettingAccountInfoItem(
+				type = "Name",
+				text = if (user.isAnonymous) "Anonymous Account" else user.name,
+				onClick = { onClick() }
+			)
+			HorizontalDivider(Modifier.padding(linePadding))
 			SettingAccountInfoItem(
 				type = "ID",
-				text = user.userId
+				text = user.userId,
+				onClick = { onClick() }
 			)
-//			ListItem(
-//				overlineContent = {
-//					Text(
-//						"ID",
-//						color = MaterialTheme.colorScheme.onSurfaceVariant
-//					)
-//				},
-//				headlineContent = { Text(if (user.isAnonymous) "Anonymous Account" else user.name) })
-
-//			Text("ID")
-//			Text(
-//				text = user.userId,
-//				modifier = Modifier,
-//				style = MaterialTheme.typography.titleSmall,
-//				color = MaterialTheme.colorScheme.onSurfaceVariant,
-//				maxLines = 1
-//			)
-			HorizontalDivider(Modifier.padding(4.dp))
+			HorizontalDivider(Modifier.padding(linePadding))
 			SettingAccountInfoItem(
 				type = "Bio",
-				text = user.bio
+				text = user.bio.ifEmpty { "Describe yourself" },
+				onClick = { onClick() }
 			)
-//			ListItem(
-//				overlineContent = {
-//					Text(
-//						"ID",
-//						color = MaterialTheme.colorScheme.onSurfaceVariant
-//					)
-//				},
-//				headlineContent = { Text(if (user.isAnonymous) "Anonymous Account" else user.name) })
-//			Text("Bio")
-//			Text(
-//				text = user.bio,
-//				modifier = Modifier,
-//				style = MaterialTheme.typography.titleSmall,
-//				color = MaterialTheme.colorScheme.onSurfaceVariant,
-//				maxLines = 1
-//			)
 		}
 	}
 }
 
 @Composable
-private fun SettingAccountInfoItem(modifier: Modifier = Modifier, type: String, text: String) {
-	Column(modifier = modifier
-		.fillMaxWidth()
-		.clickable { }) {
-		Text(
-			text = type,
-			color = MaterialTheme.colorScheme.onSurfaceVariant,
-			style = MaterialTheme.typography.titleSmall
-		)
-		Text(text, style = MaterialTheme.typography.titleSmall)
+private fun SettingAccountInfoItem(
+	modifier: Modifier = Modifier,
+	type: String,
+	text: String,
+	onClick: () -> Unit
+) {
+	Surface(onClick = { onClick() }) {
+		Column(
+			modifier = modifier
+				.fillMaxWidth()
+				.padding(horizontal = 16.dp, vertical = 8.dp)
+		) {
+			Text(
+				text = type,
+				color = MaterialTheme.colorScheme.onSurfaceVariant,
+				style = MaterialTheme.typography.titleSmall
+			)
+			Spacer(Modifier.height(4.dp))
+			Text(
+				text, style = MaterialTheme.typography.titleSmall,
+				maxLines = 1
+			)
+		}
 	}
 }
 
@@ -286,6 +244,14 @@ private fun SettingsItem(icon: ImageVector, title: String, onSettingItemClick: (
 @Composable
 private fun SettingsPreview() {
 	FireChatTheme {
-		SettingsContent(onNavigateBack = {}, user = User(name = "UserName"))
+		SettingsContent(
+			onNavigateBack = {},
+			user = User(
+				name = "Jack",
+				userId = "asdfpoiho212",
+				isAnonymous = false,
+				bio = "Very nice person doing great things"
+			)
+		)
 	}
 }
