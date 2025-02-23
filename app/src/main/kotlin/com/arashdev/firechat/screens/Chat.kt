@@ -42,14 +42,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import com.arashdev.firechat.designsystem.ChatComposeTheme
+import com.arashdev.firechat.designsystem.FireChatTheme
 import com.arashdev.firechat.model.Message
 import com.arashdev.firechat.utils.formatUtcToHoursAndMinutes
 import org.koin.androidx.compose.koinViewModel
@@ -228,7 +227,7 @@ fun MessageBubble(modifier: Modifier = Modifier, message: Message, currentUserId
 @PreviewLightDark
 @Composable
 private fun BubblePreview() {
-	ChatComposeTheme {
+	FireChatTheme {
 		val modifier = Modifier
 		MessageBubble(
 			modifier = modifier,

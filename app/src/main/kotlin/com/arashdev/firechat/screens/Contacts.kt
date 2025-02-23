@@ -29,7 +29,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import com.arashdev.firechat.designsystem.ChatComposeTheme
+import com.arashdev.firechat.designsystem.FireChatTheme
 import com.arashdev.firechat.model.User
 import org.koin.compose.koinInject
 
@@ -118,7 +118,7 @@ fun UserItem(modifier: Modifier = Modifier, user: User, onContactClick: () -> Un
 @PreviewLightDark
 @Composable
 private fun ItemPreview() {
-	ChatComposeTheme {
+	FireChatTheme {
 		UserItem(user = User(userId = "tractatos", name = "Chris McMahon", createdAt = 3770)) { }
 	}
 }

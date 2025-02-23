@@ -1,6 +1,6 @@
 package com.arashdev.firechat.di
 
-import com.arashdev.firechat.screens.AuthViewModel
+import com.arashdev.firechat.screens.LoginViewModel
 import com.arashdev.firechat.screens.ConversationsViewModel
 import com.arashdev.firechat.screens.ChatViewModel
 import com.arashdev.firechat.screens.ContactsListViewModel
@@ -16,7 +16,7 @@ import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
 val appModule = module {
-	viewModelOf(::AuthViewModel)
+	viewModelOf(::LoginViewModel)
 	viewModelOf(::ConversationsViewModel)
 	viewModelOf(::ChatViewModel)
 	viewModelOf(::ContactsListViewModel)
