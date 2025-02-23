@@ -9,7 +9,7 @@ import com.arashdev.firechat.service.RemoteStorageService
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
-class AuthViewModel(
+class LoginViewModel(
 	private val auth: AuthService,
 	private val firestore: RemoteStorageService
 ) : ViewModel() {

@@ -11,7 +11,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
-import com.arashdev.firechat.screens.AuthScreen
+import com.arashdev.firechat.screens.LoginScreen
 import com.arashdev.firechat.screens.ChatScreen
 import com.arashdev.firechat.screens.ContactProfile
 import com.arashdev.firechat.screens.ContactsListScreen
@@ -35,7 +35,7 @@ fun AppNavigation() {
 	) {
 		navigation<Onboarding>(startDestination = Login) {
 			composable<Login> {
-				AuthScreen {
+				LoginScreen {
 					navController.navigate(App) {
 						launchSingleTop = true
 						popUpTo(Onboarding) {
