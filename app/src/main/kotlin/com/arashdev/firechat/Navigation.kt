@@ -9,6 +9,7 @@ import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import com.arashdev.firechat.screens.AuthScreen
 import com.arashdev.firechat.screens.ChatScreen
@@ -30,102 +31,111 @@ fun AppNavigation() {
 
 	NavHost(
 		navController = navController,
-		startDestination = if (isLoggedIn) Conversations else Auth
+		startDestination = if (isLoggedIn) App else Onboarding
 	) {
-		composable<Auth> {
-			AuthScreen {
-				navController.navigate(Conversations) {
-					launchSingleTop = true
-					popUpTo(Auth) {
-						inclusive = true
+		navigation<Onboarding>(startDestination = Login) {
+			composable<Login> {
+				AuthScreen {
+					navController.navigate(App) {
+						launchSingleTop = true
+						popUpTo(Onboarding) {
+							inclusive = true
+						}
 					}
 				}
 			}
 		}
-		composable<Chat>(
-			enterTransition = { slideInHorizontally(tween(transitionTime)) { it } },
-			exitTransition = { slideOutHorizontally(tween(transitionTime)) { it } }
-		) {
-			ChatScreen(
-				onNavigateBack = { navController.popBackStack() })
-		}
-		composable<Contacts>(
-			enterTransition = { slideInHorizontally(tween(transitionTime)) { it } },
-			exitTransition = {
-				when {
-					targetState.destination.hierarchy.any {
-						it.hasRoute<Chat>()
-					} -> {
-						slideOutPartialToLeft
+		navigation<App>(startDestination = Conversations) {
+			composable<Chat>(
+				enterTransition = { slideInHorizontally(tween(transitionTime)) { it } },
+				exitTransition = { slideOutHorizontally(tween(transitionTime)) { it } }
+			) {
+				ChatScreen(
+					onNavigateBack = { navController.popBackStack() })
+			}
+
+			composable<Contacts>(
+				enterTransition = { slideInHorizontally(tween(transitionTime)) { it } },
+				exitTransition = {
+					when {
+						targetState.destination.hierarchy.any {
+							it.hasRoute<Chat>()
+						} -> {
+							slideOutPartialToLeft
+						}
+
+						else -> {
+							slideOutOfContainer(
+								towards = AnimatedContentTransitionScope.SlideDirection.Right,
+								animationSpec = tween(transitionTime)
+							)
+						}
 					}
-
-					else -> {
-						slideOutOfContainer(
-							towards = AnimatedContentTransitionScope.SlideDirection.Right,
-							animationSpec = tween(transitionTime)
-						)
-					}
-				}
-			}) {
-			ContactsListScreen(onUserSelected = { userID ->
-				navController.navigate(Chat(otherUserID = userID)) {
-					launchSingleTop = true
-					popUpTo(Contacts) {
-						inclusive = true
-
-					}
-				}
-			},
-				onNavigateBack = { navController.popBackStack() })
-		}
-		composable<Conversations>(
-			enterTransition = {
-
-				slideInPartialToRight
-
-			},
-			exitTransition = { slideOutPartialToLeft }
-		) {
-			ConversationsScreen(
-				onAddNewConversation = {
-					navController.navigate(Contacts)
-				},
-				onConversationClick = { conversationID ->
-					Timber.e("con:$conversationID")
-					navController.navigate(Chat(otherUserID = conversationID))
-				},
-				onNavigateToProfile = { navController.navigate(Profile) },
-				onNavigateToSettings = { navController.navigate(Settings) },
-				onNavigateToContacts = { navController.navigate(Contacts) })
-		}
-		composable<Profile>(
-			enterTransition = { slideInHorizontally(tween(transitionTime)) { it } },
-			exitTransition = { slideOutHorizontally(tween(transitionTime)) { it } }
-		) { EditProfile { navController.popBackStack() } }
-		composable<ChatProfile> { ContactProfile { navController.popBackStack() } }
-		composable<Settings>(enterTransition = { slideInHorizontally(tween(transitionTime)) { it } },
-			exitTransition = { slideOutHorizontally(tween(transitionTime)) { it } }) {
-			Settings(
-				onNavigateBack = {
-					navController.popBackStack()
-				},
-				onLogout = {
-					navController.navigate(Auth) {
+				}) {
+				ContactsListScreen(onUserSelected = { userID ->
+					navController.navigate(Chat(otherUserID = userID)) {
 						launchSingleTop = true
-						popUpTo(Auth) {
+						popUpTo(Contacts) {
 							inclusive = true
+
 						}
 					}
 				},
-				onDeleteAccount = {
-					navController.navigate(Auth) {
-						popUpTo(Auth) {
-							inclusive = true
-						}
+					onNavigateBack = { navController.popBackStack() })
+			}
 
+			composable<Conversations>(
+				enterTransition = {
+
+					slideInPartialToRight
+
+				},
+				exitTransition = { slideOutPartialToLeft }
+			) {
+				ConversationsScreen(
+					onAddNewConversation = {
+						navController.navigate(Contacts)
+					},
+					onConversationClick = { conversationID ->
+						Timber.e("con:$conversationID")
+						navController.navigate(Chat(otherUserID = conversationID))
+					},
+					onNavigateToProfile = { navController.navigate(Profile) },
+					onNavigateToSettings = { navController.navigate(Settings) },
+					onNavigateToContacts = { navController.navigate(Contacts) })
+			}
+
+			composable<Profile>(
+				enterTransition = { slideInHorizontally(tween(transitionTime)) { it } },
+				exitTransition = { slideOutHorizontally(tween(transitionTime)) { it } }
+			) { EditProfile { navController.popBackStack() } }
+
+			composable<ChatProfile> { ContactProfile { navController.popBackStack() } }
+
+			composable<Settings>(enterTransition = { slideInHorizontally(tween(transitionTime)) { it } },
+				exitTransition = { slideOutHorizontally(tween(transitionTime)) { it } }) {
+				Settings(
+					onNavigateBack = {
+						navController.popBackStack()
+					},
+					onLogout = {
+						navController.navigate(Onboarding) {
+							launchSingleTop = true
+							popUpTo(App) {
+								inclusive = true
+							}
+						}
+					},
+					onDeleteAccount = {
+						navController.navigate(Login) {
+							popUpTo(Login) {
+								inclusive = true
+							}
+
+						}
 					}
-				}
-			)
+				)
+			}
 		}
 	}
 }
@@ -138,7 +148,13 @@ val slideOutPartialToRight = slideOutHorizontally(tween(transitionTime)) { it / 
 val slideOutPartialToLeft = slideOutHorizontally(tween(transitionTime)) { -it / 3 }
 
 @Serializable
-object Auth
+object Onboarding
+
+@Serializable
+object App
+
+@Serializable
+object Login
 
 @Serializable
 data class Chat(val otherUserID: String)
