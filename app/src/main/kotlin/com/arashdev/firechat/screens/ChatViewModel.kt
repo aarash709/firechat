@@ -98,13 +98,21 @@ class ChatViewModel(
 			}.addOnFailureListener {
 				Timber.e("message sent failed!")
 			}.await()
-			updateConversation(lastMessage = text, timeSeconds = time)
+			updateConversation(
+				lastMessage = text,
+				timeSeconds = time,
+				conversationId = conversationId
+			)
 		}
 	}
 
-	private suspend fun updateConversation(lastMessage: String, timeSeconds: Long) {
+	private suspend fun updateConversation(
+		lastMessage: String,
+		timeSeconds: Long,
+		conversationId: String
+	) {
 		storageService.collection("conversations")
-			.document(otherUserId).update(
+			.document(conversationId).update(
 				"lastMessage", lastMessage,
 				"lastMessageTime", timeSeconds
 			).addOnSuccessListener {
