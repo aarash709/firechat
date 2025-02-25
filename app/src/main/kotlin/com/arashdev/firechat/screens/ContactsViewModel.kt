@@ -25,10 +25,10 @@ class ContactsListViewModel(private val storageService: RemoteStorageService) : 
 	val contacts: List<User> = _users
 
 	init {
-		fetchUsers()
+		getAllUsers()
 	}
 
-	private fun fetchUsers() {
+	private fun getAllUsers() {
 		db.collection("users")
 			.addSnapshotListener { snapshot, error ->
 				if (error != null) return@addSnapshotListener

@@ -37,7 +37,7 @@ import org.koin.compose.koinInject
 fun ContactsListScreen(
 	modifier: Modifier = Modifier,
 	viewModel: ContactsListViewModel = koinInject(),
-	onUserSelected: (userId: String) -> Unit,
+	onUserSelected: (otherUserId: String) -> Unit,
 	onNavigateBack: () -> Unit
 ) {
 	val contacts = viewModel.contacts
@@ -77,8 +77,8 @@ fun ContactsListScreen(
 		) {
 			items(contacts) { contact ->
 				UserItem(user = contact, onContactClick = {
-					viewModel.createConversation(contact.userId) { conversationId ->
-						onUserSelected(conversationId)
+					viewModel.createConversation(contact.userId) { _ ->
+						onUserSelected(contact.userId)
 					}
 				})
 			}

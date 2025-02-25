@@ -11,17 +11,16 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
-import com.arashdev.firechat.screens.LoginScreen
 import com.arashdev.firechat.screens.ChatScreen
 import com.arashdev.firechat.screens.ContactProfile
 import com.arashdev.firechat.screens.ContactsListScreen
 import com.arashdev.firechat.screens.ConversationsScreen
 import com.arashdev.firechat.screens.EditProfile
+import com.arashdev.firechat.screens.LoginScreen
 import com.arashdev.firechat.screens.Settings
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import kotlinx.serialization.Serializable
-import timber.log.Timber
 
 
 @Composable
@@ -72,8 +71,9 @@ fun AppNavigation() {
 						}
 					}
 				}) {
-				ContactsListScreen(onUserSelected = { userID ->
-					navController.navigate(Chat(otherUserID = userID)) {
+				ContactsListScreen(
+					onUserSelected = { otherUserId ->
+						navController.navigate(Chat(otherUserId = otherUserId)) {
 						launchSingleTop = true
 						popUpTo(Contacts) {
 							inclusive = true
@@ -96,9 +96,8 @@ fun AppNavigation() {
 					onAddNewConversation = {
 						navController.navigate(Contacts)
 					},
-					onConversationClick = { conversationID ->
-						Timber.e("con:$conversationID")
-						navController.navigate(Chat(otherUserID = conversationID))
+					onConversationClick = { otherUserid ->
+						navController.navigate(Chat(otherUserId = otherUserid))
 					},
 					onNavigateToProfile = { navController.navigate(Profile) },
 					onNavigateToSettings = { navController.navigate(Settings) },
@@ -157,7 +156,7 @@ object App
 object Login
 
 @Serializable
-data class Chat(val otherUserID: String)
+data class Chat(val otherUserId: String)
 
 @Serializable
 object Conversations
