@@ -19,7 +19,7 @@ class RemoteStorageServiceImpl(private val authService: AuthService) : RemoteSto
 
 	override val conversations: Flow<List<Conversation>>
 		get() = Firebase.firestore.collection(CONVERSATIONS_COLLECTION)
-			.whereArrayContains("participantIds", Firebase.auth.currentUser?.uid.orEmpty())
+			.whereArrayContains("participantIds", authService.currentUserId)
 			.dataObjects()
 
 	override val contacts: Flow<List<User>>

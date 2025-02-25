@@ -32,7 +32,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -54,6 +53,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
@@ -78,17 +78,20 @@ fun ConversationsScreen(
 	onNavigateToSettings: () -> Unit,
 	onNavigateToContacts: () -> Unit
 ) {
-	val data by viewModel.conversations.collectAsStateWithLifecycle()
+	val scope = rememberCoroutineScope()
+
+	val conversations by viewModel.conversations.collectAsStateWithLifecycle()
+	val user by viewModel.user.collectAsStateWithLifecycle()
+
 	val drawerState = rememberDrawerState(
 		DrawerValue.Closed
 	)
-	val scope = rememberCoroutineScope()
 	ModalNavigationDrawer(
 		modifier = modifier,
 		drawerContent = {
 			ConversationsDrawer(
-				name = "Jack",
-				accountStatus = "Anonymous account",
+				name = user.name,
+				accountStatus = user.isAnonymous.toString(),
 				onThemeSwitch = { },
 				onNavigateToProfile = { onNavigateToProfile() },
 				onNavigateToSettings = { onNavigateToSettings() },
@@ -123,7 +126,7 @@ fun ConversationsScreen(
 			}
 		) { padding ->
 			Surface(modifier = Modifier.fillMaxSize()) {
-				if (data.isNotEmpty()) {
+				if (conversations.isNotEmpty()) {
 					LazyColumn(
 						modifier
 							.fillMaxWidth()
@@ -131,11 +134,11 @@ fun ConversationsScreen(
 						verticalArrangement = Arrangement.spacedBy(8.dp),
 						contentPadding = PaddingValues()
 					) {
-						items(data) { conversation ->
+						items(conversations) { conversation ->
 							ConversationItem(
 								conversation = conversation,
 								onConversationClick = {
-									onConversationClick(conversation.id)
+									onConversationClick(conversation.participantIds.first { it != user.userId })
 								}
 							)
 						}
@@ -162,8 +165,12 @@ private fun ConversationsDrawer(
 		mutableStateOf(false)
 	}
 	val inDarkMode = isSystemInDarkTheme()
-	ModalDrawerSheet(modifier = Modifier, windowInsets = WindowInsets(0, 0, 0, 0)) {
-		Card(modifier = Modifier) {
+	ModalDrawerSheet(
+		modifier = Modifier,
+		drawerShape = RectangleShape,
+		windowInsets = WindowInsets(0, 0, 0, 0)
+	) {
+		Card(modifier = Modifier, shape = RectangleShape) {
 			Column(
 				modifier = Modifier
 					.fillMaxWidth()
@@ -212,18 +219,6 @@ private fun ConversationsDrawer(
 			}
 		}
 		NavigationDrawerItem(
-			label = { Text("Profile") },
-			selected = false,
-			onClick = { onNavigateToProfile() },
-			icon = {
-				Icon(
-					imageVector = Icons.Outlined.AccountCircle,
-					contentDescription = "profile icon"
-				)
-			}
-		)
-		HorizontalDivider()
-		NavigationDrawerItem(
 			label = { Text("Contacts") },
 			selected = false,
 			onClick = { onNavigateToContacts() },
@@ -233,6 +228,7 @@ private fun ConversationsDrawer(
 					contentDescription = "profile icon"
 				)
 			},
+			shape = RectangleShape
 		)
 		NavigationDrawerItem(
 			label = { Text("Settings") },
@@ -244,6 +240,7 @@ private fun ConversationsDrawer(
 					contentDescription = "profile icon"
 				)
 			},
+			shape = RectangleShape
 		)
 	}
 }
@@ -312,7 +309,10 @@ fun ConversationItem(
 					contentDescription = "contact profile pic"
 				)
 				Column(modifier = Modifier) {
-					Text(text = "Name", style = MaterialTheme.typography.bodyLarge)
+					Text(
+						text = conversation.contactName,
+						style = MaterialTheme.typography.bodyLarge
+					)
 					Text(
 						text = conversation.lastMessage,
 						modifier = Modifier,

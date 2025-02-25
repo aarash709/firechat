@@ -25,7 +25,6 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
@@ -38,7 +37,7 @@ import org.koin.compose.koinInject
 fun ContactsListScreen(
 	modifier: Modifier = Modifier,
 	viewModel: ContactsListViewModel = koinInject(),
-	onUserSelected: (userId: String) -> Unit,
+	onUserSelected: (otherUserId: String) -> Unit,
 	onNavigateBack: () -> Unit
 ) {
 	val contacts = viewModel.contacts
@@ -78,8 +77,8 @@ fun ContactsListScreen(
 		) {
 			items(contacts) { contact ->
 				UserItem(user = contact, onContactClick = {
-					viewModel.createConversation(contact.userId) { conversationId ->
-						onUserSelected(conversationId)
+					viewModel.createConversation(contact.userId) { _ ->
+						onUserSelected(contact.userId)
 					}
 				})
 			}
@@ -108,7 +107,7 @@ fun UserItem(modifier: Modifier = Modifier, user: User, onContactClick: () -> Un
 				)
 				Column(modifier = Modifier.padding(0.dp)) {
 					Text(text = user.name, fontWeight = FontWeight.Bold)
-					Text(text = user.userId, color = Color.Gray)
+					Text(text = user.userId, color = MaterialTheme.colorScheme.onSurfaceVariant)
 				}
 			}
 		}

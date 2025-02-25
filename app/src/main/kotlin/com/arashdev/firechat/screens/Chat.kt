@@ -48,6 +48,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.arashdev.firechat.designsystem.FireChatTheme
 import com.arashdev.firechat.model.Message
 import com.arashdev.firechat.utils.formatUtcToHoursAndMinutes
@@ -62,6 +63,7 @@ fun ChatScreen(
 	onNavigateBack: () -> Unit,
 ) {
 	val messages = viewModel.messages
+	val contact by viewModel.contact.collectAsStateWithLifecycle()
 	var messageText by remember { mutableStateOf("") }
 	val listState = rememberLazyListState()
 	LaunchedEffect(true) {
@@ -85,9 +87,9 @@ fun ChatScreen(
 							contentDescription = "contact profile pic"
 						)
 						Column {
-							Text(text = "username", style = MaterialTheme.typography.titleLarge)
+							Text(text = contact.name, style = MaterialTheme.typography.titleLarge)
 							Text(
-								text = "userStatus",
+								text = contact.isAnonymous.toString(),
 								style = MaterialTheme.typography.bodyMedium,
 								color = MaterialTheme.colorScheme.onSurfaceVariant
 							)

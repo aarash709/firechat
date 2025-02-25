@@ -7,30 +7,40 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.arashdev.firechat.Chat
 import com.arashdev.firechat.model.Message
-import com.arashdev.firechat.service.RemoteStorageService
-import com.google.firebase.auth.ktx.auth
+import com.arashdev.firechat.model.User
+import com.arashdev.firechat.service.AuthService
+import com.arashdev.firechat.utils.getConversationId
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import timber.log.Timber
 import java.time.Instant
 
 class ChatViewModel(
-	private val storageService: RemoteStorageService,
+//	private val storageService: RemoteStorageService,
+	private val authService: AuthService,
 	savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-	private val auth = Firebase.auth
-	private val db = Firebase.firestore
+	//	private val authService = Firebase.auth
+	private val storageService = Firebase.firestore
 
-	val currentUserID: String = auth.currentUser!!.uid
-	private val conversationId = savedStateHandle.toRoute<Chat>().otherUserID
-//	private val uniqueID =
-//		getConversationId(currentUserId = currentUserID, otherUserId = otherUserID)
+	val currentUserID: String = authService.currentUserId
+	private val otherUserId = savedStateHandle.toRoute<Chat>().otherUserId
+	private val conversationId =
+		getConversationId(currentUserId = currentUserID, otherUserId = otherUserId)
 
-	private val messagesCollection = db.collection("conversations/$conversationId/messages")
+	private val messagesCollection =
+		storageService.collection("conversations/$conversationId/messages")
+	private val contactInfo = storageService.collection("users")
+		.document(otherUserId)
+
+	private val _contact = MutableStateFlow(User())
+	val contact: StateFlow<User> = _contact
 
 	// State for messages
 	private val _messages = mutableStateListOf<Message>()
@@ -45,22 +55,25 @@ class ChatViewModel(
 
 
 	init {
-		Timber.e("userid : $conversationId")
+		Timber.e("userid : $otherUserId")
+		getUserDetails()
 		fetchMessages()
+
+	}
+
+	private fun getUserDetails() {
+		viewModelScope.launch {
+			contactInfo
+				.addSnapshotListener { snapshot, error ->
+					_contact.value = snapshot?.toObject(User::class.java)!!
+				}
+		}
 	}
 
 	private fun fetchMessages() {
 		viewModelScope.launch {
 			messagesCollection
 				.orderBy("timestamp", Query.Direction.ASCENDING)
-//				.get()
-//				.addOnSuccessListener {
-//					val objects = it.toObjects<Message>()
-//					_messages.clear()
-//					_messages.addAll(objects)
-//				}.addOnFailureListener { exception ->
-//					Timber.e(exception.message)
-//				}.await()
 				.addSnapshotListener { snapshot, error ->
 					Timber.e(error?.message)
 					if (error != null) return@addSnapshotListener
@@ -90,15 +103,15 @@ class ChatViewModel(
 	}
 
 	private suspend fun updateConversation(lastMessage: String, timeSeconds: Long) {
-		 db.collection("conversations")
-			.document(conversationId).update(
-			"lastMessage", lastMessage,
-			"lastMessageTime", timeSeconds
-		).addOnSuccessListener {
-			Timber.e("conversation updated successfully!")
-		}.addOnFailureListener {
-			Timber.e(it.message)
-			Timber.e("conversation could not be updated!")
-		}.await()
+		storageService.collection("conversations")
+			.document(otherUserId).update(
+				"lastMessage", lastMessage,
+				"lastMessageTime", timeSeconds
+			).addOnSuccessListener {
+				Timber.e("conversation updated successfully!")
+			}.addOnFailureListener {
+				Timber.e(it.message)
+				Timber.e("conversation could not be updated!")
+			}.await()
 	}
 }
