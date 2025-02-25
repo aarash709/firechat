@@ -20,6 +20,8 @@ class ContactsListViewModel(private val storageService: RemoteStorageService) : 
 	private val auth = Firebase.auth
 	private val currentUserId = auth.currentUser?.uid
 
+	private val conversationCollection = db.collection("conversations")
+
 	// List of all users except the current user
 	private val _users = mutableStateListOf<User>()
 	val contacts: List<User> = _users
@@ -55,8 +57,8 @@ class ContactsListViewModel(private val storageService: RemoteStorageService) : 
 			Timber.e("created conversation ID:$conversationId")
 			try {
 				Timber.e("Checking conversation existence!")
-				val collection = db.collection("conversations").document(conversationId).get()
-				conversationExists = collection.await().exists()
+				conversationExists =
+					conversationCollection.document(conversationId).id == conversationId
 			} catch (e: Exception) {
 				Timber.e("failed to check conversation reason:${e.message}")
 			}
