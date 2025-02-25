@@ -7,7 +7,6 @@ import com.arashdev.firechat.model.Conversation
 import com.arashdev.firechat.model.User
 import com.arashdev.firechat.service.RemoteStorageService
 import com.arashdev.firechat.utils.getConversationId
-import com.google.android.gms.tasks.Tasks.await
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
@@ -72,9 +71,11 @@ class ContactsListViewModel(private val storageService: RemoteStorageService) : 
 				return@launch
 			} else {
 				Timber.e("Conversation does not exist! creating a new conversation!")
+				val contactName = contacts.first { it.userId == otherUserId }.name
 				val conversation = Conversation(
 					id = conversationId,
 					participantIds = listOf(currentUserId, otherUserId),
+					contactName = contactName,
 					lastMessage = "",
 					lastMessageTime = Instant.now().epochSecond,
 					createdAt = Instant.now().epochSecond

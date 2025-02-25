@@ -25,7 +25,6 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
@@ -108,7 +107,7 @@ fun UserItem(modifier: Modifier = Modifier, user: User, onContactClick: () -> Un
 				)
 				Column(modifier = Modifier.padding(0.dp)) {
 					Text(text = user.name, fontWeight = FontWeight.Bold)
-					Text(text = user.userId, color = Color.Gray)
+					Text(text = user.userId, color = MaterialTheme.colorScheme.onSurfaceVariant)
 				}
 			}
 		}

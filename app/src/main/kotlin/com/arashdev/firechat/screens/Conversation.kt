@@ -312,7 +312,10 @@ fun ConversationItem(
 					contentDescription = "contact profile pic"
 				)
 				Column(modifier = Modifier) {
-					Text(text = "Name", style = MaterialTheme.typography.bodyLarge)
+					Text(
+						text = conversation.contactName,
+						style = MaterialTheme.typography.bodyLarge
+					)
 					Text(
 						text = conversation.lastMessage,
 						modifier = Modifier,
