@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -72,7 +73,7 @@ fun ChatScreen(
 		}
 	}
 	Scaffold(
-		modifier = modifier,
+		modifier = modifier.imePadding(),
 		topBar = {
 			TopAppBar(
 				modifier = modifier.padding(horizontal = 0.dp),
@@ -170,27 +171,22 @@ fun ChatScreen(
 				)
 			}
 		}) { padding ->
-		Column(
+		LazyColumn(
 			modifier = Modifier
 				.fillMaxSize()
-				.padding(padding)
+				.padding(padding),
+			state = listState,
+			verticalArrangement = Arrangement.Bottom,
 		) {
-			LazyColumn(
-				modifier = Modifier.fillMaxSize(),
-				state = listState,
-				verticalArrangement = Arrangement.Bottom,
-			) {
-				items(messages) { message ->
-					MessageBubble(
-						modifier = Modifier.padding(4.dp),
-						message = message,
-						currentUserId = viewModel.currentUserID
-					)
-				}
+			items(messages) { message ->
+				MessageBubble(
+					modifier = Modifier.padding(16.dp, vertical = 4.dp),
+					message = message,
+					currentUserId = viewModel.currentUserID
+				)
 			}
 		}
 	}
-
 }
 
 @Composable
