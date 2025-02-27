@@ -1,55 +1,46 @@
 package com.arashdev.firechat.screens
 
-import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.arashdev.firechat.model.Conversation
 import com.arashdev.firechat.model.User
+import com.arashdev.firechat.service.AuthService
 import com.arashdev.firechat.service.RemoteStorageService
 import com.arashdev.firechat.utils.getConversationId
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.ktx.Firebase
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 import timber.log.Timber
-import java.time.Instant
 
-class ContactsListViewModel(private val storageService: RemoteStorageService) : ViewModel() {
-	private val db = Firebase.firestore
-	private val auth = Firebase.auth
-	private val currentUserId = auth.currentUser?.uid
+class ContactsListViewModel(
+	private val storageService: RemoteStorageService,
+	private val authService: AuthService
+) : ViewModel() {
 
-	private val conversationCollection = db.collection("conversations")
+	private val currentUser = authService.currentUser.stateIn(
+		scope = viewModelScope,
+		started = SharingStarted.WhileSubscribed(5000),
+		initialValue = User()
+	)
 
-	// List of all users except the current user
-	private val _users = mutableStateListOf<User>()
-	val contacts: List<User> = _users
+	private val currentUserId = authService.currentUserId
 
-	init {
-		getAllUsers()
-	}
-
-	private fun getAllUsers() {
-		db.collection("users")
-			.addSnapshotListener { snapshot, error ->
-				if (error != null) return@addSnapshotListener
-				snapshot?.let {
-					_users.clear()
-					_users.addAll(it.toObjects(User::class.java)
-						.filterNot { user ->
-							user.userId == currentUserId // Exclude current user
-						})
-				}
-			}
-	}
+	val contacts: StateFlow<List<User>> = storageService.users.map { users ->
+		// Exclude current user
+		users.filterNot { it.userId == currentUserId }
+	}.stateIn(
+		scope = viewModelScope,
+		started = SharingStarted.WhileSubscribed(5000),
+		initialValue = listOf()
+	)
 
 	fun createConversation(
 		otherUserId: String,
 		onNavigateToChat: (conversationId: String) -> Unit
 	) {
 		viewModelScope.launch {
-			val currentUserId = currentUserId ?: return@launch
+			val currentUserId = currentUserId
 			val conversationId = getConversationId(currentUserId, otherUserId)
 			var conversationExists: Boolean? = null
 
@@ -58,61 +49,37 @@ class ContactsListViewModel(private val storageService: RemoteStorageService) : 
 			try {
 				Timber.e("Checking conversation existence!")
 				conversationExists =
-					conversationCollection.document(conversationId).id == conversationId
+					storageService.conversationExists(conversationId)
 			} catch (e: Exception) {
 				Timber.e("failed to check conversation reason:${e.message}")
 			}
 
 			if (conversationExists == true) {
 				Timber.e("conversation exists! navigating to chat!")
-				db.collection("conversations")
-					.whereArrayContains("participantIds", currentUserId).get()
-					.addOnSuccessListener {
-						onNavigateToChat(conversationId)
-					}.await()
+				onNavigateToChat(conversationId)
 				return@launch
 			} else {
 				Timber.e("Conversation does not exist! creating a new conversation!")
-				val contactName = contacts.first { it.userId == otherUserId }.name
-				val conversation = Conversation(
-					id = conversationId,
-					participantIds = listOf(currentUserId, otherUserId),
-					contactName = contactName,
-					lastMessage = "",
-					lastMessageTime = Instant.now().epochSecond,
-					createdAt = Instant.now().epochSecond
-				)
-
-				db.collection("conversations")
-					.document(conversationId)
-					.set(conversation)
-					.addOnSuccessListener {
-						Timber.e("Conversation created id: $conversationId!")
+//				val contactName = contacts.value.first { it.userId == otherUserId }.name
+//				val participantsNames =
+//					mapOf(currentUserId to currentUser.value.name, otherUserId to contactName)
+				storageService.createNewConversation(
+					conversationId = conversationId,
+					currentUserId = currentUserId,
+					otherContactId = otherUserId,
+					onConversationCreationSuccessful = {
+						Timber.e("navigating to chat!")
 						onNavigateToChat(conversationId)
-					}
-					.addOnFailureListener {
-						Timber.e("failed to create conversation!")
-					}.await()
+						Timber.e("Conversation created id: $conversationId!")
+					})
 			}
 		}
 	}
-
-	fun validateUserExists(otherUserId: String, onSuccess: () -> Unit) {
-		db.collection("users")
-			.document(otherUserId).get()
-			.addOnSuccessListener { snapshot ->
-				if (snapshot.exists()) {
-					onSuccess()
-				} else {
-					// Show error: "User does not exist"
-				}
-			}
-	}
 }
 
-sealed class ConversationState {
-	data object Idle : ConversationState()
-	data object Loading : ConversationState()
-	data class Success(val conversationId: String) : ConversationState()
-	data class Error(val message: String) : ConversationState()
-}
+//sealed class ConversationState {
+//	data object Idle : ConversationState()
+//	data object Loading : ConversationState()
+//	data class Success(val conversationId: String) : ConversationState()
+//	data class Error(val message: String) : ConversationState()
+//}

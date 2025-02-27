@@ -3,8 +3,8 @@ package com.arashdev.firechat.service
 import com.arashdev.firechat.model.Conversation
 import com.arashdev.firechat.model.Message
 import com.arashdev.firechat.model.User
-import com.arashdev.firechat.utils.getConversationId
 import com.google.firebase.auth.ktx.auth
+import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.dataObjects
 import com.google.firebase.firestore.ktx.firestore
@@ -16,6 +16,10 @@ import java.time.Instant
 
 
 class RemoteStorageServiceImpl(private val authService: AuthService) : RemoteStorageService {
+
+	override val users: Flow<List<User>>
+		get() = Firebase.firestore.collection(CONTACTS_COLLECTION)
+			.dataObjects()
 
 	override val conversations: Flow<List<Conversation>>
 		get() = Firebase.firestore.collection(CONVERSATIONS_COLLECTION)
@@ -32,24 +36,45 @@ class RemoteStorageServiceImpl(private val authService: AuthService) : RemoteSto
 			.whereArrayContains("participantIds", Firebase.auth.currentUser?.uid.orEmpty())
 			.dataObjects()
 
-	override fun observeMessages(otherContactId: String): Flow<List<Message>> {
-		return Firebase.firestore.collection("conversations/$otherContactId/messages")
-			.whereArrayContains("participantIds", Firebase.auth.currentUser?.uid.orEmpty())
+	override fun getUser(userId: String): Flow<User?> {
+		return Firebase.firestore.collection(CONTACTS_COLLECTION).document(userId).dataObjects()
+	}
+
+	override fun observeMessages(conversationId: String): Flow<List<Message>> {
+		return Firebase.firestore.collection("conversations/$conversationId/messages")
+			.orderBy("timestamp", Query.Direction.ASCENDING)
 			.dataObjects()
 	}
 
 	override suspend fun sendMessage(
-		messageText: String,
-		currentUserId: String,
-		otherContactId: String
+		message: Message,
+		conversationId: String
 	) {
-		val message = Message(
-			text = messageText,
-			senderId = currentUserId,
-			timestamp = System.currentTimeMillis()
-		)
-		Firebase.firestore.collection("conversations/$otherContactId/messages").add(message).await()
+		Firebase.firestore
+			.collection("conversations/$conversationId/messages")
+			.add(message)
+			.addOnSuccessListener {
+				Timber.e("message sent successfully!")
+			}.addOnFailureListener {
+				Timber.e("message sent failed!")
+			}.await()
+	}
 
+	override suspend fun updateConversation(
+		conversationId: String,
+		lastMessage: String,
+		timeSeconds: Long
+	) {
+		Firebase.firestore.collection("conversations")
+			.document(conversationId).update(
+				"lastMessage", lastMessage,
+				"lastMessageTime", timeSeconds
+			).addOnSuccessListener {
+				Timber.e("conversation updated successfully!")
+			}.addOnFailureListener {
+				Timber.e("conversation could not be updated!")
+				Timber.e("reason: ${it.message}")
+			}.await()
 	}
 
 	override suspend fun createUser(userId: String, userName: String) {
@@ -75,37 +100,36 @@ class RemoteStorageServiceImpl(private val authService: AuthService) : RemoteSto
 			.set(hashMapOf("name" to userName), SetOptions.merge()).await()
 	}
 
-	override suspend fun createConversation(
-		message: String,
+	override suspend fun createNewConversation(
+		conversationId: String,
 		currentUserId: String,
 		otherContactId: String,
-		onConversationCreationSuccessfull: () -> Unit
+		onConversationCreationSuccessful: () -> Unit
 	) {
-		val conversationId = getConversationId(currentUserId, otherContactId)
-//		val conversationExists =
-//			db.collection("conversations").document(conversationId).id == conversationId
-//		if (conversationExists) {
-//			return
-//		}
 		val conversation = Conversation(
 			id = conversationId,
 			participantIds = listOf(currentUserId, otherContactId),
 			lastMessage = "",
-			createdAt = Instant.now().epochSecond
+			contactName = "",
+			createdAt = Instant.now().epochSecond,
+			lastMessageTime = Instant.now().epochSecond
 		)
-
 		// Create or update the conversation document
 		Firebase.firestore.collection(CONVERSATIONS_COLLECTION)
 			.document(conversationId)
 			.set(conversation)
 			.addOnSuccessListener {
-				onConversationCreationSuccessfull()
-			}
-
+				onConversationCreationSuccessful()
+			}.await()
 	}
 
 	override suspend fun removeUserData(userId: String) {
 		Firebase.firestore.collection(CONTACTS_COLLECTION).document(userId).delete().await()
+	}
+
+	override suspend fun conversationExists(conversationId: String): Boolean {
+		return Firebase.firestore.collection(CONVERSATIONS_COLLECTION)
+			.document(conversationId).get().await().id == conversationId
 	}
 
 	companion object {
