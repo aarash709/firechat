@@ -3,7 +3,6 @@ package com.arashdev.firechat.service
 import com.arashdev.firechat.model.Conversation
 import com.arashdev.firechat.model.Message
 import com.arashdev.firechat.model.User
-import com.arashdev.firechat.utils.getConversationId
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.dataObjects
@@ -79,37 +78,36 @@ class RemoteStorageServiceImpl(private val authService: AuthService) : RemoteSto
 			.set(hashMapOf("name" to userName), SetOptions.merge()).await()
 	}
 
-	override suspend fun createConversation(
-		message: String,
+	override suspend fun createNewConversation(
+		conversationId: String,
 		currentUserId: String,
 		otherContactId: String,
-		onConversationCreationSuccessfull: () -> Unit
+		onConversationCreationSuccessful: () -> Unit
 	) {
-		val conversationId = getConversationId(currentUserId, otherContactId)
-//		val conversationExists =
-//			db.collection("conversations").document(conversationId).id == conversationId
-//		if (conversationExists) {
-//			return
-//		}
 		val conversation = Conversation(
 			id = conversationId,
 			participantIds = listOf(currentUserId, otherContactId),
 			lastMessage = "",
-			createdAt = Instant.now().epochSecond
+			contactName = "",
+			createdAt = Instant.now().epochSecond,
+			lastMessageTime = Instant.now().epochSecond
 		)
-
 		// Create or update the conversation document
 		Firebase.firestore.collection(CONVERSATIONS_COLLECTION)
 			.document(conversationId)
 			.set(conversation)
 			.addOnSuccessListener {
-				onConversationCreationSuccessfull()
-			}
-
+				onConversationCreationSuccessful()
+			}.await()
 	}
 
 	override suspend fun removeUserData(userId: String) {
 		Firebase.firestore.collection(CONTACTS_COLLECTION).document(userId).delete().await()
+	}
+
+	override suspend fun conversationExists(conversationId: String): Boolean {
+		return Firebase.firestore.collection(CONVERSATIONS_COLLECTION)
+			.document(conversationId).get().await().id == conversationId
 	}
 
 	companion object {

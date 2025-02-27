@@ -26,12 +26,15 @@ interface RemoteStorageService {
 
 	suspend fun updateUsername(userName: String, userId: String)
 
-	suspend fun createConversation(
-		message: String, currentUserId: String,
+	suspend fun createNewConversation(
+		conversationId: String,
+		currentUserId: String,
 		otherContactId: String,
-		onConversationCreationSuccessfull: () -> Unit
+		onConversationCreationSuccessful: () -> Unit
 	)
 
 	suspend fun removeUserData(userId: String)
+
+	suspend fun conversationExists(conversationId: String): Boolean
 
 }
