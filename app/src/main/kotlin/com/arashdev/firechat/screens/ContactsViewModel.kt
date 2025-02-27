@@ -77,9 +77,9 @@ class ContactsListViewModel(
 	}
 }
 
-sealed class ConversationState {
-	data object Idle : ConversationState()
-	data object Loading : ConversationState()
-	data class Success(val conversationId: String) : ConversationState()
-	data class Error(val message: String) : ConversationState()
-}
+//sealed class ConversationState {
+//	data object Idle : ConversationState()
+//	data object Loading : ConversationState()
+//	data class Success(val conversationId: String) : ConversationState()
+//	data class Error(val message: String) : ConversationState()
+//}

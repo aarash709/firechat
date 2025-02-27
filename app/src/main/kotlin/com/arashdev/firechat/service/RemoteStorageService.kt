@@ -15,11 +15,13 @@ interface RemoteStorageService {
 
 	val messages: Flow<List<Message>>
 
-	fun observeMessages(otherContactId: String): Flow<List<Message>>
+	fun getUser(userId: String): Flow<User?>
+
+	fun observeMessages(conversationId: String): Flow<List<Message>>
 
 	suspend fun sendMessage(
-		messageText: String, currentUserId: String,
-		otherContactId: String
+		message: Message,
+		conversationId: String
 	)
 
 	suspend fun createUser(userId: String, userName: String = "")
@@ -36,5 +38,7 @@ interface RemoteStorageService {
 	suspend fun removeUserData(userId: String)
 
 	suspend fun conversationExists(conversationId: String): Boolean
+
+	suspend fun updateConversation(conversationId: String, lastMessage: String, timeSeconds: Long)
 
 }

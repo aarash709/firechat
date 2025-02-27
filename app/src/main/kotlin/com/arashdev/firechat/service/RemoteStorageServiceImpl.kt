@@ -4,6 +4,7 @@ import com.arashdev.firechat.model.Conversation
 import com.arashdev.firechat.model.Message
 import com.arashdev.firechat.model.User
 import com.google.firebase.auth.ktx.auth
+import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.dataObjects
 import com.google.firebase.firestore.ktx.firestore
@@ -35,24 +36,45 @@ class RemoteStorageServiceImpl(private val authService: AuthService) : RemoteSto
 			.whereArrayContains("participantIds", Firebase.auth.currentUser?.uid.orEmpty())
 			.dataObjects()
 
-	override fun observeMessages(otherContactId: String): Flow<List<Message>> {
-		return Firebase.firestore.collection("conversations/$otherContactId/messages")
-			.whereArrayContains("participantIds", Firebase.auth.currentUser?.uid.orEmpty())
+	override fun getUser(userId: String): Flow<User?> {
+		return Firebase.firestore.collection(CONTACTS_COLLECTION).document(userId).dataObjects()
+	}
+
+	override fun observeMessages(conversationId: String): Flow<List<Message>> {
+		return Firebase.firestore.collection("conversations/$conversationId/messages")
+			.orderBy("timestamp", Query.Direction.ASCENDING)
 			.dataObjects()
 	}
 
 	override suspend fun sendMessage(
-		messageText: String,
-		currentUserId: String,
-		otherContactId: String
+		message: Message,
+		conversationId: String
 	) {
-		val message = Message(
-			text = messageText,
-			senderId = currentUserId,
-			timestamp = System.currentTimeMillis()
-		)
-		Firebase.firestore.collection("conversations/$otherContactId/messages").add(message).await()
+		Firebase.firestore
+			.collection("conversations/$conversationId/messages")
+			.add(message)
+			.addOnSuccessListener {
+				Timber.e("message sent successfully!")
+			}.addOnFailureListener {
+				Timber.e("message sent failed!")
+			}.await()
+	}
 
+	override suspend fun updateConversation(
+		conversationId: String,
+		lastMessage: String,
+		timeSeconds: Long
+	) {
+		Firebase.firestore.collection("conversations")
+			.document(conversationId).update(
+				"lastMessage", lastMessage,
+				"lastMessageTime", timeSeconds
+			).addOnSuccessListener {
+				Timber.e("conversation updated successfully!")
+			}.addOnFailureListener {
+				Timber.e("conversation could not be updated!")
+				Timber.e("reason: ${it.message}")
+			}.await()
 	}
 
 	override suspend fun createUser(userId: String, userName: String) {

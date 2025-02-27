@@ -63,15 +63,19 @@ fun ChatScreen(
 	viewModel: ChatViewModel = koinViewModel(),
 	onNavigateBack: () -> Unit,
 ) {
-	val messages = viewModel.messages
+	val messages by viewModel.messages.collectAsStateWithLifecycle()
 	val contact by viewModel.contact.collectAsStateWithLifecycle()
+
 	var messageText by remember { mutableStateOf("") }
+
 	val listState = rememberLazyListState()
+
 	LaunchedEffect(true) {
 		if (messages.isNotEmpty()) {
 			listState.animateScrollToItem(messages.lastIndex)
 		}
 	}
+
 	Scaffold(
 		modifier = modifier.imePadding(),
 		topBar = {
