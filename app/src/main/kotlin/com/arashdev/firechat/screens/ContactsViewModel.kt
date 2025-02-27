@@ -1,48 +1,40 @@
 package com.arashdev.firechat.screens
 
-import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.arashdev.firechat.model.Conversation
 import com.arashdev.firechat.model.User
+import com.arashdev.firechat.service.AuthService
 import com.arashdev.firechat.service.RemoteStorageService
 import com.arashdev.firechat.utils.getConversationId
-import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import timber.log.Timber
 import java.time.Instant
 
-class ContactsListViewModel(private val storageService: RemoteStorageService) : ViewModel() {
+class ContactsListViewModel(
+	private val storageService: RemoteStorageService,
+	private val authService: AuthService
+) : ViewModel() {
 	private val db = Firebase.firestore
-	private val auth = Firebase.auth
-	private val currentUserId = auth.currentUser?.uid
+	private val currentUserId = authService.currentUserId
 
 	private val conversationCollection = db.collection("conversations")
 
-	// List of all users except the current user
-	private val _users = mutableStateListOf<User>()
-	val contacts: List<User> = _users
-
-	init {
-		getAllUsers()
-	}
-
-	private fun getAllUsers() {
-		db.collection("users")
-			.addSnapshotListener { snapshot, error ->
-				if (error != null) return@addSnapshotListener
-				snapshot?.let {
-					_users.clear()
-					_users.addAll(it.toObjects(User::class.java)
-						.filterNot { user ->
-							user.userId == currentUserId // Exclude current user
-						})
-				}
-			}
-	}
+	val contacts: StateFlow<List<User>> = storageService.users.map { users ->
+		// Exclude current user
+		users.filterNot { it.userId == currentUserId }
+	}.stateIn(
+		scope = viewModelScope,
+		started = SharingStarted.WhileSubscribed(5000),
+		initialValue = listOf()
+	)
 
 	fun createConversation(
 		otherUserId: String,
@@ -73,7 +65,7 @@ class ContactsListViewModel(private val storageService: RemoteStorageService) : 
 				return@launch
 			} else {
 				Timber.e("Conversation does not exist! creating a new conversation!")
-				val contactName = contacts.first { it.userId == otherUserId }.name
+				val contactName = contacts.value.first { it.userId == otherUserId }.name
 				val conversation = Conversation(
 					id = conversationId,
 					participantIds = listOf(currentUserId, otherUserId),

@@ -7,6 +7,8 @@ import kotlinx.coroutines.flow.Flow
 
 interface RemoteStorageService {
 
+	val users: Flow<List<User>>
+
 	val conversations: Flow<List<Conversation>>
 
 	val contacts: Flow<List<User>>

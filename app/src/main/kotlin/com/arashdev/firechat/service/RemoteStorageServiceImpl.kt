@@ -17,6 +17,10 @@ import java.time.Instant
 
 class RemoteStorageServiceImpl(private val authService: AuthService) : RemoteStorageService {
 
+	override val users: Flow<List<User>>
+		get() = Firebase.firestore.collection(CONTACTS_COLLECTION)
+			.dataObjects()
+
 	override val conversations: Flow<List<Conversation>>
 		get() = Firebase.firestore.collection(CONVERSATIONS_COLLECTION)
 			.whereArrayContains("participantIds", authService.currentUserId)
