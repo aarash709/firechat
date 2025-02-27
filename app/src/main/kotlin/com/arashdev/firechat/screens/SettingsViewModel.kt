@@ -40,17 +40,16 @@ class SettingsViewModel(
 		viewModelScope.launch {
 			try {
 				auth.linkAccount(email = email, password = password)
-				auth.updateDisplayName(displayName)
-				remoteStorage.updateUsername(displayName, userId)
+				updateDisplayName(name = displayName)
 			} catch (e: Exception) {
 				Timber.e("Account link Error ${e.message}")
 			}
 		}
 	}
 
-	fun updateDisplayName(name: String) {
-		viewModelScope.launch {
-			remoteStorage.updateUsername(userName = name, userId = userId)
-		}
+	private suspend fun updateDisplayName(name: String) {
+		auth.updateDisplayName(name = name)
+		remoteStorage.updateUsername(userName = name, userId = userId)
+
 	}
 }

@@ -18,7 +18,7 @@ class LoginViewModel(
 	val uiState: State<AuthUiState> = _uiState
 
 	/**
-		new user for login
+	new user authentication
 	 */
 	fun signupWithEmailAndPassword(email: String, password: String, userName: String) {
 		viewModelScope.launch {
@@ -33,7 +33,7 @@ class LoginViewModel(
 	}
 
 	/**
-		existing user for login
+	existing user login
 	 */
 	fun signInWithEmailAndPassword(email: String, password: String) {
 		_uiState.value = AuthUiState.Loading
