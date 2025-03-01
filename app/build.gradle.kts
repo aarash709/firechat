@@ -65,12 +65,13 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.koin.android)
     implementation(libs.koin.compose)
-    debugImplementation(libs.androidx.compose.ui.tooling)
+	debugImplementation(libs.androidx.compose.ui.tooling)
 
     //firebase
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.auth)
+	implementation(libs.firebase.database)
 
     //log
     implementation(libs.timber)

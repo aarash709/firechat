@@ -41,4 +41,7 @@ interface RemoteStorageService {
 
 	suspend fun updateConversation(conversationId: String, lastMessage: String, timeSeconds: Long)
 
+	suspend fun updateUserPresenceStatus(isOnline: Boolean)
+
+	fun getUserPresenceStatus(userId: String): Pair<Boolean, Long>
 }

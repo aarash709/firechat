@@ -4,6 +4,11 @@ import com.arashdev.firechat.model.Conversation
 import com.arashdev.firechat.model.Message
 import com.arashdev.firechat.model.User
 import com.google.firebase.auth.ktx.auth
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.ServerValue
+import com.google.firebase.database.ValueEventListener
+import com.google.firebase.database.ktx.database
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.dataObjects
@@ -16,6 +21,40 @@ import java.time.Instant
 
 
 class RemoteStorageServiceImpl(private val authService: AuthService) : RemoteStorageService {
+	private val database = Firebase.database
+
+	override suspend fun updateUserPresenceStatus(isOnline: Boolean) {
+		database.getReference("users").child(authService.currentUserId).child("isOnline")
+			.setValue(isOnline).await()
+		database.getReference("users").child(authService.currentUserId).child("laseSeen")
+			.setValue(ServerValue.TIMESTAMP).await()
+	}
+
+	override fun getUserPresenceStatus(userId: String): Pair<Boolean, Long> {
+		var lastSeen: Long? = null
+		var isOnline: Boolean? = null
+		database.getReference("users").child(userId).child("isOnline")
+			.addValueEventListener(object : ValueEventListener {
+				override fun onDataChange(snapshot: DataSnapshot) {
+					isOnline = snapshot.getValue(Boolean::class.java)
+				}
+
+				override fun onCancelled(error: DatabaseError) {
+					Timber.e(error.message)
+				}
+			})
+		database.getReference("users").child(authService.currentUserId).child("laseSeen")
+			.addValueEventListener(object : ValueEventListener {
+				override fun onDataChange(snapshot: DataSnapshot) {
+					lastSeen = snapshot.getValue(Long::class.java)
+				}
+
+				override fun onCancelled(error: DatabaseError) {
+					Timber.e(error.message)
+				}
+			})
+		return Pair(isOnline!!, lastSeen!!)
+	}
 
 	override val users: Flow<List<User>>
 		get() = Firebase.firestore.collection(CONTACTS_COLLECTION)
