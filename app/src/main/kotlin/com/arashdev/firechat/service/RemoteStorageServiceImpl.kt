@@ -15,6 +15,7 @@ import com.google.firebase.firestore.dataObjects
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.tasks.await
 import timber.log.Timber
 import java.time.Instant
@@ -30,7 +31,7 @@ class RemoteStorageServiceImpl(private val authService: AuthService) : RemoteSto
 			.setValue(ServerValue.TIMESTAMP).await()
 	}
 
-	override fun getUserPresenceStatus(userId: String): Pair<Boolean, Long> {
+	override fun getUserPresenceStatus(userId: String): Flow<Pair<Boolean, Long>> = flow {
 		var lastSeen: Long? = null
 		var isOnline: Boolean? = null
 		database.getReference("users").child(userId).child("isOnline")
@@ -53,7 +54,8 @@ class RemoteStorageServiceImpl(private val authService: AuthService) : RemoteSto
 					Timber.e(error.message)
 				}
 			})
-		return Pair(isOnline!!, lastSeen!!)
+		Timber.e(lastSeen.toString())
+		emit(Pair(isOnline ?: false, lastSeen ?: 0))
 	}
 
 	override val users: Flow<List<User>>

@@ -49,6 +49,13 @@ class ChatViewModel(
 				initialValue = listOf()
 			)
 
+	val contactPresenceStatus = storageService.getUserPresenceStatus(otherUserId).stateIn(
+		scope = viewModelScope,
+		started = SharingStarted.WhileSubscribed(5000),
+		initialValue = Pair(false, 0)
+	)
+
+
 	init {
 		Timber.e("other userId : $otherUserId")
 	}
