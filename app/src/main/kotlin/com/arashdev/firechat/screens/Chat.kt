@@ -72,7 +72,7 @@ fun ChatScreen(
 
 	LaunchedEffect(true) {
 		if (messages.isNotEmpty()) {
-			listState.animateScrollToItem(messages.lastIndex)
+			listState.animateScrollToItem(0)
 		}
 	}
 
@@ -180,6 +180,7 @@ fun ChatScreen(
 				.fillMaxSize()
 				.padding(padding),
 			state = listState,
+			reverseLayout = true,
 			verticalArrangement = Arrangement.Bottom,
 		) {
 			items(messages) { message ->
