@@ -12,6 +12,7 @@ import com.arashdev.firechat.service.RemoteStorageService
 import com.arashdev.firechat.utils.getConversationId
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -43,6 +44,7 @@ class ChatViewModel(
 
 	val messages: StateFlow<List<Message>> =
 		storageService.observeMessages(conversationId = conversationId)
+			.map { it.reversed() }
 			.stateIn(
 				scope = viewModelScope,
 				started = SharingStarted.WhileSubscribed(5000),
