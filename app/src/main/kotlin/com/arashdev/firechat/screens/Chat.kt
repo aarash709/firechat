@@ -67,12 +67,13 @@ fun ChatScreen(
 	val messages by viewModel.messages.collectAsStateWithLifecycle()
 	val contact by viewModel.contact.collectAsStateWithLifecycle()
 	val presence by viewModel.contactPresenceStatus.collectAsStateWithLifecycle()
+	val (isOnline, lastSeen) = presence
 
 	var messageText by remember { mutableStateOf("") }
 
 	val listState = rememberLazyListState()
 
-	LaunchedEffect(true) {
+	LaunchedEffect(true, presence) {
 		if (messages.isNotEmpty()) {
 			listState.animateScrollToItem(messages.lastIndex)
 		}
@@ -98,7 +99,7 @@ fun ChatScreen(
 						Column {
 							Text(text = contact.name, style = MaterialTheme.typography.titleLarge)
 							Text(
-								text = presence.first.toString(),
+								text = lastSeen,
 								style = MaterialTheme.typography.bodyMedium,
 								color = MaterialTheme.colorScheme.onSurfaceVariant
 							)

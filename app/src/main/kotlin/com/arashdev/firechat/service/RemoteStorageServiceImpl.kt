@@ -1,5 +1,6 @@
 package com.arashdev.firechat.service
 
+import androidx.compose.runtime.mutableStateOf
 import com.arashdev.firechat.model.Conversation
 import com.arashdev.firechat.model.Message
 import com.arashdev.firechat.model.User
@@ -8,55 +9,75 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ServerValue
 import com.google.firebase.database.ValueEventListener
+import com.google.firebase.database.getValue
 import com.google.firebase.database.ktx.database
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.dataObjects
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import timber.log.Timber
 import java.time.Instant
 
 
 class RemoteStorageServiceImpl(private val authService: AuthService) : RemoteStorageService {
-	private val database = Firebase.database
+	private val database = Firebase.database.reference
 
 	override suspend fun updateUserPresenceStatus(isOnline: Boolean) {
-		database.getReference("users").child(authService.currentUserId).child("isOnline")
+		database.child("users").child(authService.currentUserId).child("connected")
 			.setValue(isOnline).await()
-		database.getReference("users").child(authService.currentUserId).child("laseSeen")
+		database.child("users").child(authService.currentUserId).child("lastSeen")
 			.setValue(ServerValue.TIMESTAMP).await()
 	}
 
-	override fun getUserPresenceStatus(userId: String): Flow<Pair<Boolean, Long>> = flow {
-		var lastSeen: Long? = null
-		var isOnline: Boolean? = null
-		database.getReference("users").child(userId).child("isOnline")
-			.addValueEventListener(object : ValueEventListener {
+	override fun getUserPresenceStatus(userId: String): Flow<Pair<Boolean, Long>> =
+		callbackFlow {
+			val presence = mutableStateOf(Pair(false, 0L))
+
+			// Firebase references for connected and lastSeen
+			val connectedRef = database.child("users").child(userId).child("connected")
+			val lastSeenRef = database.child("users").child(userId).child("lastSeen")
+
+			// Listener for online status
+			val connectedListener = object : ValueEventListener {
 				override fun onDataChange(snapshot: DataSnapshot) {
-					isOnline = snapshot.getValue(Boolean::class.java)
+					val isOnline = snapshot.getValue<Boolean>() ?: false
+					presence.value = Pair(isOnline, presence.value.second)
+					trySend(presence.value) // Emit the updated state
 				}
 
 				override fun onCancelled(error: DatabaseError) {
-					Timber.e(error.message)
+					Timber.e("Connected listener cancelled: ${error.message}")
 				}
-			})
-		database.getReference("users").child(authService.currentUserId).child("laseSeen")
-			.addValueEventListener(object : ValueEventListener {
+			}
+
+			// Listener for last seen timestamp
+			val lastSeenListener = object : ValueEventListener {
 				override fun onDataChange(snapshot: DataSnapshot) {
-					lastSeen = snapshot.getValue(Long::class.java)
+					val lastSeen = snapshot.getValue<Long>() ?: 0L
+					presence.value = Pair(presence.value.first, lastSeen)
+					trySend(presence.value) // Emit the updated state
 				}
 
 				override fun onCancelled(error: DatabaseError) {
-					Timber.e(error.message)
+					Timber.e("Last seen listener cancelled: ${error.message}")
 				}
-			})
-		Timber.e(lastSeen.toString())
-		emit(Pair(isOnline ?: false, lastSeen ?: 0))
-	}
+			}
+
+			// Attach listeners
+			connectedRef.addValueEventListener(connectedListener)
+			lastSeenRef.addValueEventListener(lastSeenListener)
+
+			// Cleanup when Flow collection stops
+			awaitClose {
+				connectedRef.removeEventListener(connectedListener)
+				lastSeenRef.removeEventListener(lastSeenListener)
+			}
+		}
 
 	override val users: Flow<List<User>>
 		get() = Firebase.firestore.collection(CONTACTS_COLLECTION)

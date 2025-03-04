@@ -1,5 +1,6 @@
 package com.arashdev.firechat.screens
 
+import android.text.format.DateUtils
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -12,10 +13,10 @@ import com.arashdev.firechat.service.RemoteStorageService
 import com.arashdev.firechat.utils.getConversationId
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import timber.log.Timber
 import java.time.Instant
 
 class ChatViewModel(
@@ -49,16 +50,32 @@ class ChatViewModel(
 				initialValue = listOf()
 			)
 
-	val contactPresenceStatus = storageService.getUserPresenceStatus(otherUserId).stateIn(
-		scope = viewModelScope,
-		started = SharingStarted.WhileSubscribed(5000),
-		initialValue = Pair(false, 0)
-	)
-
-
-	init {
-		Timber.e("other userId : $otherUserId")
-	}
+	val contactPresenceStatus: StateFlow<Pair<Boolean, String>> =
+		storageService.getUserPresenceStatus(otherUserId)
+			.map {
+				val isOnline = it.first
+				val lastSeen = if (isOnline) {
+					"Online"
+				} else {
+					buildString {
+						append("last seen")
+						append(" ")
+						append(
+							DateUtils.getRelativeTimeSpanString(
+								it.second,
+								System.currentTimeMillis(),
+								DateUtils.MINUTE_IN_MILLIS,
+							)
+						)
+					}
+				}
+				Pair(isOnline, lastSeen)
+			}
+			.stateIn(
+				scope = viewModelScope,
+				started = SharingStarted.WhileSubscribed(5000),
+				initialValue = Pair(false, "lase seen recently")
+			)
 
 	fun sendMessage(text: String) {
 		viewModelScope.launch {

@@ -16,7 +16,6 @@ class MainActivity : ComponentActivity() {
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
-		lifecycleScope.launch { database.updateUserPresenceStatus(isOnline = true) }
 		enableEdgeToEdge()
 		setContent {
 			FireChatTheme {
@@ -25,9 +24,12 @@ class MainActivity : ComponentActivity() {
 		}
 	}
 
+	override fun onStart() {
+		super.onStart()
+		lifecycleScope.launch { database.updateUserPresenceStatus(isOnline = true) }
+	}
 	override fun onStop() {
 		super.onStop()
 		lifecycleScope.launch { database.updateUserPresenceStatus(isOnline = false) }
-
 	}
 }
