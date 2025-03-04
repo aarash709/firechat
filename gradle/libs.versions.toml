@@ -21,6 +21,7 @@ googleGmsGoogleServices = "4.4.2"
 firebaseBom = "33.9.0"
 koin = "4.0.2"
 timber = "5.0.1"
+firebaseDatabase = "21.0.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-coreKtx" }
@@ -74,6 +75,7 @@ timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "tim
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
 firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore" }
 firebase-auth = { group = "com.google.firebase", name = "firebase-auth" }
+firebase-database = { group = "com.google.firebase", name = "firebase-database" }
 
 #build-logic dependecies
 android-gradlePlugin = { group = "com.android.tools.build", name = "gradle", version.ref = "androidGradlePlugin" }
