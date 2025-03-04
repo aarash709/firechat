@@ -64,7 +64,7 @@ class ChatViewModel(
 							DateUtils.getRelativeTimeSpanString(
 								it.second,
 								System.currentTimeMillis(),
-								DateUtils.MINUTE_IN_MILLIS,
+								DateUtils.SECOND_IN_MILLIS,
 							)
 						)
 					}
