@@ -69,7 +69,6 @@ import com.arashdev.firechat.R
 import com.arashdev.firechat.designsystem.FireChatTheme
 import com.arashdev.firechat.model.User
 import org.koin.androidx.compose.koinViewModel
-import timber.log.Timber
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
@@ -124,12 +123,10 @@ fun Settings(
 	val pickImageLauncher = rememberLauncherForActivityResult(
 		contract = ActivityResultContracts.PickVisualMedia(),
 		onResult = { uri ->
-			Timber.e("URI IS :$uri")
-			val path = getRealPathFromURI(uri = uri!!, context)
-			Timber.e("PATH IS :$path")
 			uri?.let {
+				val path = getRealPathFromURI(uri = it, context)
+				viewModel.uploadProfilePhoto(path!!, userId = viewModel.userId)
 			}
-			viewModel.uploadProfilePhoto(path!!, userId = viewModel.userId)
 		})
 	Box(
 		modifier
