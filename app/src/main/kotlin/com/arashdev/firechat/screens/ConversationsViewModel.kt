@@ -20,6 +20,7 @@ class ConversationsViewModel(
 	private val authService: AuthService
 ) : ViewModel() {
 
+	val currentUserId = authService.currentUserId
 	val conversations: StateFlow<List<Conversation>> =
 		storageService.conversations.map { conversationList ->
 			conversationList.map { conversation ->
@@ -29,8 +30,14 @@ class ConversationsViewModel(
 				val contactName =
 					Firebase.firestore.collection("users").document(contactId).dataObjects<User>()
 						.first()?.name
-
-				conversation.copy(contactName = contactName!!)
+				val contactUser =
+					storageService.getUser(conversation.participantIds.firstOrNull { it != currentUserId }
+						.orEmpty())
+						.first()
+				conversation.copy(
+					contactName = contactName!!,
+					contactPhotoBase64 = contactUser?.profilePhotoBase64.orEmpty()
+				)
 			}
 		}.stateIn(
 			scope = viewModelScope,
@@ -38,11 +45,15 @@ class ConversationsViewModel(
 			initialValue = emptyList()
 		)
 
-	val user = authService.currentUser.stateIn(
-		scope = viewModelScope,
-		started = SharingStarted.WhileSubscribed(5_000),
-		initialValue = User()
-	)
+	val user = authService.currentUser
+		.map {
+			val user = storageService.getUser(authService.currentUserId).first()
+			it.copy(profilePhotoBase64 = user?.profilePhotoBase64.orEmpty())
+		}.stateIn(
+			scope = viewModelScope,
+			started = SharingStarted.WhileSubscribed(5_000),
+			initialValue = User()
+		)
 
 }
 

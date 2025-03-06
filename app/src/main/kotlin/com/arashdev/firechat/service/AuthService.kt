@@ -1,5 +1,6 @@
 package com.arashdev.firechat.service
 
+import android.net.Uri
 import com.arashdev.firechat.model.User
 import kotlinx.coroutines.flow.Flow
 
@@ -26,4 +27,9 @@ interface AuthService {
 	suspend fun signOut()
 
 	suspend fun updateDisplayName(name: String)
+
+	/**
+	 * used to add photo to the users list in auth service, currently not used in this app, instead photos are compressed using base64 and uploaded to the users collection in firestore
+	 */
+	suspend fun updatePhotoUri(uri: Uri)
 }

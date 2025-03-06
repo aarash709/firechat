@@ -1,9 +1,14 @@
 package com.arashdev.firechat.screens
 
 
+import android.graphics.BitmapFactory
+import android.util.Base64
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
@@ -18,12 +23,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.NightlightRound
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.WbSunny
-import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.material.icons.outlined.Person
@@ -53,7 +59,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
@@ -64,6 +73,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.arashdev.firechat.R
 import com.arashdev.firechat.designsystem.FireChatTheme
 import com.arashdev.firechat.model.Conversation
+import com.arashdev.firechat.model.User
 import com.arashdev.firechat.utils.formatUtcToLocalTime
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
@@ -90,7 +100,7 @@ fun ConversationsScreen(
 		modifier = modifier,
 		drawerContent = {
 			ConversationsDrawer(
-				name = user.name,
+				user = user,
 				accountStatus = user.isAnonymous.toString(),
 				onThemeSwitch = { },
 				onNavigateToProfile = { onNavigateToProfile() },
@@ -154,7 +164,7 @@ fun ConversationsScreen(
 
 @Composable
 private fun ConversationsDrawer(
-	name: String,
+	user: User,
 	accountStatus: String,
 	onNavigateToProfile: () -> Unit,
 	onNavigateToSettings: () -> Unit,
@@ -184,12 +194,43 @@ private fun ConversationsDrawer(
 					horizontalArrangement = Arrangement.SpaceBetween,
 					verticalAlignment = Alignment.CenterVertically
 				) {
-					Icon(
-						imageVector = Icons.Outlined.AccountCircle,
-						modifier = Modifier
-							.size(60.dp),
-						contentDescription = "profile picture"
-					)
+					Surface(
+						onClick = { onNavigateToSettings() },
+						Modifier
+							.clip(CircleShape)
+							.size(80.dp)
+					) {
+						if (user.profilePhotoBase64.isNotEmpty()) {
+							val bitmap by remember(user.profilePhotoBase64) {
+								val array = Base64.decode(
+									user.profilePhotoBase64,
+									Base64.DEFAULT
+								)
+								mutableStateOf(
+									BitmapFactory.decodeByteArray(array, 0, array.size)
+										.asImageBitmap()
+								)
+							}
+							Image(
+								bitmap,
+								contentDescription = ""
+							)
+						} else {
+							Box(
+								Modifier.background(Color.Gray),
+								contentAlignment = Alignment.Center
+							) {
+								Icon(
+									imageVector = Icons.Default.Person,
+									modifier = Modifier
+										.fillMaxSize()
+										.padding(8.dp),
+									contentDescription = null
+								)
+							}
+						}
+					}
+
 					Switch(
 						checked = !inDarkMode,
 						onCheckedChange = {
@@ -210,7 +251,7 @@ private fun ConversationsDrawer(
 
 						})
 				}
-				Text(text = name, style = MaterialTheme.typography.titleLarge)
+				Text(text = user.name, style = MaterialTheme.typography.titleLarge)
 				Text(
 					text = accountStatus,
 					style = MaterialTheme.typography.titleSmall,
@@ -302,12 +343,40 @@ fun ConversationItem(
 				horizontalArrangement = Arrangement.spacedBy(8.dp),
 				verticalAlignment = Alignment.CenterVertically
 			) {
-				Icon(
-					imageVector = Icons.Outlined.AccountCircle,
-					modifier = Modifier
-						.size(50.dp),
-					contentDescription = "contact profile pic"
-				)
+				Surface(
+					onClick = { },
+					Modifier
+						.clip(CircleShape)
+						.size(50.dp)
+				) {
+					if (conversation.contactPhotoBase64.isNotEmpty()) {
+						val bitmap by remember(conversation.contactPhotoBase64) {
+							val array = Base64.decode(
+								conversation.contactPhotoBase64,
+								Base64.DEFAULT
+							)
+							mutableStateOf(
+								BitmapFactory.decodeByteArray(array, 0, array.size)
+									.asImageBitmap()
+							)
+						}
+						Image(
+							bitmap,
+							contentDescription = ""
+						)
+					} else {
+						Box(Modifier.background(Color.Gray), contentAlignment = Alignment.Center) {
+							Icon(
+								imageVector = Icons.Default.Person,
+								modifier = Modifier
+									.fillMaxSize()
+									.padding(8.dp),
+								contentDescription = null
+							)
+						}
+					}
+				}
+
 				Column(modifier = Modifier) {
 					Text(
 						text = conversation.contactName,

@@ -8,6 +8,7 @@ data class Conversation(
 	val contactName: String = "",
 	val lastMessage: String = "",
 	val lastMessageTime: Long = 0,
+	val contactPhotoBase64: String = "",
 	val createdAt: Long = Instant.now().epochSecond
 )
 

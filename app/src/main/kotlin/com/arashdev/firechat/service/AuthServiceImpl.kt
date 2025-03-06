@@ -1,5 +1,6 @@
 package com.arashdev.firechat.service
 
+import android.net.Uri
 import com.arashdev.firechat.model.User
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
@@ -13,59 +14,65 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 
 class AuthServiceImpl : AuthService {
+	private val auth = Firebase.auth
 
 	override val currentUserId: String
-		get() = Firebase.auth.currentUser?.uid.orEmpty()
+		get() = auth.currentUser?.uid.orEmpty()
 
 	override val currentUser: Flow<User>
 		get() = callbackFlow {
 			val authListener = FirebaseAuth.AuthStateListener { firebaseAuth ->
 				trySend(firebaseAuth.currentUser.toUser())
 			}
-			Firebase.auth.addAuthStateListener(authListener)
+			auth.addAuthStateListener(authListener)
 			awaitClose {
-				Firebase.auth.removeAuthStateListener(authListener)
+				auth.removeAuthStateListener(authListener)
 			}
 		}
 
 	override fun hasUser(): Boolean {
-		return Firebase.auth.currentUser != null
+		return auth.currentUser != null
 	}
 
 	override val doesUserExists: Boolean
-		get() = Firebase.auth.currentUser != null
+		get() = auth.currentUser != null
 
 	override suspend fun createAnonymousAccount() {
-		Firebase.auth.signInAnonymously().await()
+		auth.signInAnonymously().await()
 	}
 
 	override suspend fun createNewAccount(email: String, password: String) {
-		Firebase.auth.createUserWithEmailAndPassword(email,password)
+		auth.createUserWithEmailAndPassword(email, password)
 	}
 
 	override suspend fun deleteAccount() {
-		Firebase.auth.currentUser?.delete()?.await()
+		auth.currentUser?.delete()?.await()
 	}
 
 	override suspend fun linkAccount(email: String, password: String) {
 		val credential = EmailAuthProvider.getCredential(email, password)
-		Firebase.auth.currentUser!!.linkWithCredential(credential).await()
+		auth.currentUser!!.linkWithCredential(credential).await()
 	}
 
 	override suspend fun signInWithEmailAndPassword(email: String, password: String) {
-		val provider = EmailAuthProvider.getCredential(email,password)
-		Firebase.auth.signInWithCredential(provider).await()
+		val provider = EmailAuthProvider.getCredential(email, password)
+		auth.signInWithCredential(provider).await()
 	}
 
 	override suspend fun signOut() {
-		Firebase.auth.signOut()
+		auth.signOut()
 	}
 
 	override suspend fun updateDisplayName(name: String) {
-		Firebase.auth.currentUser?.updateProfile(
+		auth.currentUser?.updateProfile(
 			UserProfileChangeRequest.Builder()
 				.setDisplayName(name).build()
 		)
+	}
+
+	override suspend fun updatePhotoUri(uri: Uri) {
+		val userProfileChangeRequest = UserProfileChangeRequest.Builder().setPhotoUri(uri).build()
+		auth.currentUser?.updateProfile(userProfileChangeRequest)
 	}
 
 	private fun FirebaseUser?.toUser(): User {
@@ -77,6 +84,7 @@ class AuthServiceImpl : AuthService {
 		return User(
 			userId = this?.uid ?: "",
 			name = userName,
+			profilePhotoBase64 = "",
 			createdAt = this?.metadata?.creationTimestamp ?: 0,
 			isAnonymous = this?.isAnonymous ?: false,
 			bio = ""

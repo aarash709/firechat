@@ -1,5 +1,14 @@
 package com.arashdev.firechat.screens
 
+import android.content.Context
+import android.graphics.BitmapFactory
+import android.net.Uri
+import android.provider.OpenableColumns
+import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,11 +22,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.outlined.DeleteForever
 import androidx.compose.material.icons.outlined.Language
@@ -47,14 +56,23 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.arashdev.firechat.R
 import com.arashdev.firechat.designsystem.FireChatTheme
 import com.arashdev.firechat.model.User
 import org.koin.androidx.compose.koinViewModel
+import java.io.File
+import java.io.FileOutputStream
+import java.io.InputStream
+import kotlin.io.encoding.ExperimentalEncodingApi
 
 @Composable
 fun Settings(
@@ -64,7 +82,52 @@ fun Settings(
 	onLogout: () -> Unit,
 	onDeleteAccount: () -> Unit
 ) {
+	val context = LocalContext.current
 	val user by viewModel.user.collectAsStateWithLifecycle()
+
+	fun getRealPathFromURI(uri: Uri, context: Context): String? {
+		val returnCursor = context.contentResolver.query(uri, null, null, null, null)
+		val nameIndex = returnCursor!!.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+		val sizeIndex = returnCursor.getColumnIndex(OpenableColumns.SIZE)
+		returnCursor.moveToFirst()
+		val name = returnCursor.getString(nameIndex)
+		val size = returnCursor.getLong(sizeIndex).toString()
+		val file = File(context.filesDir, name)
+		try {
+			val inputStream: InputStream? = context.contentResolver.openInputStream(uri)
+			val outputStream = FileOutputStream(file)
+			var read = 0
+			val maxBufferSize = 1 * 1024 * 1024
+			val bytesAvailable: Int = inputStream?.available() ?: 0
+			//int bufferSize = 1024;
+			val bufferSize = Math.min(bytesAvailable, maxBufferSize)
+			val buffers = ByteArray(bufferSize)
+			while (inputStream?.read(buffers).also {
+					if (it != null) {
+						read = it
+					}
+				} != -1) {
+				outputStream.write(buffers, 0, read)
+			}
+			Log.e("File Size", "Size " + file.length())
+			inputStream?.close()
+			outputStream.close()
+			Log.e("File Path", "Path " + file.path)
+
+		} catch (e: java.lang.Exception) {
+			Log.e("Exception", e.message!!)
+		}
+		return file.path
+	}
+
+	val pickImageLauncher = rememberLauncherForActivityResult(
+		contract = ActivityResultContracts.PickVisualMedia(),
+		onResult = { uri ->
+			uri?.let {
+				val path = getRealPathFromURI(uri = it, context)
+				viewModel.uploadProfilePhoto(path!!, userId = viewModel.userId)
+			}
+		})
 	Box(
 		modifier
 			.fillMaxSize()
@@ -176,14 +239,21 @@ fun Settings(
 				}
 			)
 		}
-		SettingsContent(modifier = Modifier, user, onNavigateBack = { onNavigateBack() },
+		SettingsContent(
+			modifier = Modifier,
+			user = user,
+			onNavigateBack = { onNavigateBack() },
 			onLogout = { showLogoutDialog = !showLogoutDialog },
 			onDeleteAccount = { showDeleteAccountDialog = !showDeleteAccountDialog },
-			onLinkAccount = { showLinkAccountDialog = !showLinkAccountDialog })
+			onLinkAccount = { showLinkAccountDialog = !showLinkAccountDialog },
+			onProfilePhoto = {
+				pickImageLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+			}
+		)
 	}
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalEncodingApi::class)
 @Composable
 fun SettingsContent(
 	modifier: Modifier = Modifier,
@@ -191,7 +261,8 @@ fun SettingsContent(
 	onNavigateBack: () -> Unit,
 	onLinkAccount: () -> Unit,
 	onLogout: () -> Unit,
-	onDeleteAccount: () -> Unit
+	onDeleteAccount: () -> Unit,
+	onProfilePhoto: () -> Unit
 ) {
 	Scaffold(modifier = modifier, topBar = {
 		TopAppBar(
@@ -298,11 +369,35 @@ fun SettingsContent(
 					verticalAlignment = Alignment.CenterVertically,
 					horizontalArrangement = Arrangement.spacedBy(8.dp)
 				) {
-					Icon(
-						imageVector = Icons.Outlined.AccountCircle,
-						modifier = Modifier.size(80.dp),
-						contentDescription = "Profile picture"
-					)
+					Surface(
+						onClick = { onProfilePhoto() },
+						Modifier
+							.clip(CircleShape)
+							.size(64.dp)
+					) {
+						if (user.profilePhotoBase64.isNotEmpty()) {
+							val bitmap by remember(user.profilePhotoBase64) {
+								val array = android.util.Base64.decode(
+									user.profilePhotoBase64,
+									android.util.Base64.DEFAULT
+								)
+								mutableStateOf(
+									BitmapFactory.decodeByteArray(array, 0, array.size)
+										.asImageBitmap()
+								)
+							}
+							Image(
+								bitmap,
+								contentDescription = ""
+							)
+						} else {
+							Image(
+								painterResource(R.drawable.ic_launcher_foreground),
+								contentDescription = ""
+							)
+
+						}
+					}
 					Text(user.name, style = MaterialTheme.typography.headlineMedium)
 				}
 			}
@@ -449,7 +544,8 @@ private fun SettingsPreview() {
 			),
 			onLogout = {},
 			onDeleteAccount = {},
-			onLinkAccount = {}
+			onLinkAccount = {},
+			onProfilePhoto = {}
 		)
 	}
 }
