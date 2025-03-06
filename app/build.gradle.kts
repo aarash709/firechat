@@ -65,7 +65,8 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.koin.android)
     implementation(libs.koin.compose)
-	debugImplementation(libs.androidx.compose.ui.tooling)
+    debugImplementation(libs.androidx.compose.ui.tooling)
+    implementation(libs.coilCompose)
 
     //firebase
     implementation(platform(libs.firebase.bom))

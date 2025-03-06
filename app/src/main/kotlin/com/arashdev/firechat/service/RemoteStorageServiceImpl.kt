@@ -26,6 +26,7 @@ import java.time.Instant
 
 class RemoteStorageServiceImpl(private val authService: AuthService) : RemoteStorageService {
 	private val database = Firebase.database.reference
+	private val firestore = Firebase.firestore
 
 	override suspend fun updateUserPresenceStatus(isOnline: Boolean) {
 		database.child("users").child(authService.currentUserId).child("connected")
@@ -79,31 +80,37 @@ class RemoteStorageServiceImpl(private val authService: AuthService) : RemoteSto
 			}
 		}
 
+	override suspend fun updateProfilePhoto(base64String: String, userId: String) {
+		val data = hashMapOf("profilePhotoBase64" to base64String)
+		firestore.collection(USERS_COLLECTION).document(userId)
+			.set(data, SetOptions.merge()).await()
+	}
+
 	override val users: Flow<List<User>>
-		get() = Firebase.firestore.collection(CONTACTS_COLLECTION)
+		get() = firestore.collection(USERS_COLLECTION)
 			.dataObjects()
 
 	override val conversations: Flow<List<Conversation>>
-		get() = Firebase.firestore.collection(CONVERSATIONS_COLLECTION)
+		get() = firestore.collection(CONVERSATIONS_COLLECTION)
 			.whereArrayContains("participantIds", authService.currentUserId)
 			.dataObjects()
 
 	override val contacts: Flow<List<User>>
-		get() = Firebase.firestore.collection(CONTACTS_COLLECTION)
+		get() = firestore.collection(USERS_COLLECTION)
 			.whereArrayContains("participantIds", Firebase.auth.currentUser?.uid.orEmpty())
 			.dataObjects()
 
 	override val messages: Flow<List<Message>>
-		get() = Firebase.firestore.collection(MESSAGE_COLLECTION)
+		get() = firestore.collection(MESSAGE_COLLECTION)
 			.whereArrayContains("participantIds", Firebase.auth.currentUser?.uid.orEmpty())
 			.dataObjects()
 
 	override fun getUser(userId: String): Flow<User?> {
-		return Firebase.firestore.collection(CONTACTS_COLLECTION).document(userId).dataObjects()
+		return firestore.collection(USERS_COLLECTION).document(userId).dataObjects()
 	}
 
 	override fun observeMessages(conversationId: String): Flow<List<Message>> {
-		return Firebase.firestore.collection("conversations/$conversationId/messages")
+		return firestore.collection("conversations/$conversationId/messages")
 			.orderBy("timestamp", Query.Direction.ASCENDING)
 			.dataObjects()
 	}
@@ -112,7 +119,7 @@ class RemoteStorageServiceImpl(private val authService: AuthService) : RemoteSto
 		message: Message,
 		conversationId: String
 	) {
-		Firebase.firestore
+		firestore
 			.collection("conversations/$conversationId/messages")
 			.add(message)
 			.addOnSuccessListener {
@@ -127,7 +134,7 @@ class RemoteStorageServiceImpl(private val authService: AuthService) : RemoteSto
 		lastMessage: String,
 		timeSeconds: Long
 	) {
-		Firebase.firestore.collection("conversations")
+		firestore.collection("conversations")
 			.document(conversationId).update(
 				"lastMessage", lastMessage,
 				"lastMessageTime", timeSeconds
@@ -140,12 +147,14 @@ class RemoteStorageServiceImpl(private val authService: AuthService) : RemoteSto
 	}
 
 	override suspend fun createUser(userId: String, userName: String) {
-		val user = hashMapOf(
-			"userId" to userId,
-			"name" to userName.ifEmpty { "Anonymous User" },
-			"createdAt" to Instant.now().epochSecond //utc
+		val user = User(
+			userId = userId,
+			name = userName.ifEmpty { "Anonymous User" },
+			profilePhotoBase64 = "",
+			createdAt = Instant.now().epochSecond, //utc
+			bio = ""
 		)
-		Firebase.firestore.collection(CONTACTS_COLLECTION)
+		firestore.collection(USERS_COLLECTION)
 			.document(userId)
 			.set(user)
 			.addOnSuccessListener {
@@ -158,7 +167,7 @@ class RemoteStorageServiceImpl(private val authService: AuthService) : RemoteSto
 	}
 
 	override suspend fun updateUsername(userName: String, userId: String) {
-		Firebase.firestore.collection(CONTACTS_COLLECTION).document(userId)
+		firestore.collection(USERS_COLLECTION).document(userId)
 			.set(hashMapOf("name" to userName), SetOptions.merge()).await()
 	}
 
@@ -177,7 +186,7 @@ class RemoteStorageServiceImpl(private val authService: AuthService) : RemoteSto
 			lastMessageTime = Instant.now().epochSecond
 		)
 		// Create or update the conversation document
-		Firebase.firestore.collection(CONVERSATIONS_COLLECTION)
+		firestore.collection(CONVERSATIONS_COLLECTION)
 			.document(conversationId)
 			.set(conversation)
 			.addOnSuccessListener {
@@ -186,17 +195,17 @@ class RemoteStorageServiceImpl(private val authService: AuthService) : RemoteSto
 	}
 
 	override suspend fun removeUserData(userId: String) {
-		Firebase.firestore.collection(CONTACTS_COLLECTION).document(userId).delete().await()
+		firestore.collection(USERS_COLLECTION).document(userId).delete().await()
 	}
 
 	override suspend fun conversationExists(conversationId: String): Boolean {
-		return Firebase.firestore.collection(CONVERSATIONS_COLLECTION)
+		return firestore.collection(CONVERSATIONS_COLLECTION)
 			.document(conversationId).get().await().id == conversationId
 	}
 
 	companion object {
 		private const val CONVERSATIONS_COLLECTION = "conversations"
-		private const val CONTACTS_COLLECTION = "users"
+		private const val USERS_COLLECTION = "users"
 		private const val MESSAGE_COLLECTION = "messages"
 	}
 }
