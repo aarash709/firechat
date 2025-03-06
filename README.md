@@ -21,7 +21,8 @@ This demo application is developed using Kotlin for the Android platform and lev
 
 - **Firebase Auth**: Manages user authentication, including email and anonymous sign-in, and profile linking.
 - **Firestore**: A NoSQL document database to store chat messages, user profiles, and other application data in real-time.
-- **Firebase Storage**: Used for storing media files such as images and videos shared within chats. _(Backlog)_
+- **Realtime Database**: Realtime database is used to keep track of user presence and last seen feature.
+- ~~**Firebase Storage**: Used for storing media files such as images and videos shared within chats. _(Backlog)_~~
 
 ### Screenshots
 _soon!_
@@ -31,11 +32,11 @@ _soon!_
 |-------------------|-----------------------------------------------|-----------------|
 | **Voice Calls**  | Enable real-time voice communication between users. | *Backlog* |
 | **Video Calls**  | Add support for video calls for face-to-face chats. | *Backlog*        |
-| **Group Chats**  | Allow users to create and join group conversations. | *Planned*        |
+| **Group Chats**  | Allow users to create and join group conversations. | *Backlog*        |
 | **File Sharing** | Enable users to share files (documents, images, etc.) | *Backlog*        |
 | **Message Reactions**| Let users react to messages with emojis.         | *Backlog*        |
 | **Themes & Customization** | Allow users to customize the app's appearance.   | *Planned*        |
-| **End-to-End Encryption** | Implement E2EE for enhanced message privacy.      | *Considering*    |
+| **End-to-End Encryption** | Implement E2EE for enhanced message privacy.      | *In Development*    |
 | **Profile settings** | Profile picture and more settings.      | *In Development*    |
 
 *Status indicators are subject to change.*
