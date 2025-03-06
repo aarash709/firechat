@@ -373,7 +373,7 @@ fun SettingsContent(
 						onClick = { onProfilePhoto() },
 						Modifier
 							.clip(CircleShape)
-							.size(80.dp)
+							.size(64.dp)
 					) {
 						if (user.profilePhotoBase64.isNotEmpty()) {
 							val bitmap by remember(user.profilePhotoBase64) {
