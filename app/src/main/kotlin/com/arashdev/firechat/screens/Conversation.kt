@@ -5,8 +5,10 @@ import android.graphics.BitmapFactory
 import android.util.Base64
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
@@ -26,6 +28,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.NightlightRound
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Menu
@@ -57,9 +60,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
@@ -213,20 +216,21 @@ private fun ConversationsDrawer(
 								contentDescription = ""
 							)
 						} else {
-							Image(
-								painterResource(R.drawable.ic_launcher_foreground),
-								contentDescription = ""
-							)
-
+							Box(
+								Modifier.background(Color.Gray),
+								contentAlignment = Alignment.Center
+							) {
+								Icon(
+									imageVector = Icons.Default.Person,
+									modifier = Modifier
+										.fillMaxSize()
+										.padding(8.dp),
+									contentDescription = null
+								)
+							}
 						}
 					}
 
-//					Icon(
-//						imageVector = Icons.Outlined.AccountCircle,
-//						modifier = Modifier
-//							.size(60.dp),
-//						contentDescription = "profile picture"
-//					)
 					Switch(
 						checked = !inDarkMode,
 						onCheckedChange = {
@@ -361,19 +365,18 @@ fun ConversationItem(
 							contentDescription = ""
 						)
 					} else {
-						Image(
-							painterResource(R.drawable.ic_launcher_foreground),
-							contentDescription = ""
-						)
-
+						Box(Modifier.background(Color.Gray), contentAlignment = Alignment.Center) {
+							Icon(
+								imageVector = Icons.Default.Person,
+								modifier = Modifier
+									.fillMaxSize()
+									.padding(8.dp),
+								contentDescription = null
+							)
+						}
 					}
 				}
-//				Icon(
-//					imageVector = Icons.Outlined.AccountCircle,
-//					modifier = Modifier
-//						.size(50.dp),
-//					contentDescription = "contact profile pic"
-//				)
+
 				Column(modifier = Modifier) {
 					Text(
 						text = conversation.contactName,

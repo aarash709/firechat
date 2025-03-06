@@ -32,9 +32,9 @@ class ChatViewModel(
 		getConversationId(currentUserId = currentUserID, otherUserId = otherUserId)
 
 	val contact: StateFlow<User> = storageService
-		.getUser(otherUserId)
-		.mapNotNull {
-			it
+		.getUser(otherUserId)!!
+		.mapNotNull { contact ->
+			contact
 		}
 		.stateIn(
 			scope = viewModelScope,
