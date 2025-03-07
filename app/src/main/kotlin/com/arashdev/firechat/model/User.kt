@@ -6,5 +6,6 @@ data class User(
 	val profilePhotoBase64: String = "",
 	val createdAt: Long = 0,
 	val isAnonymous: Boolean = false,
+	val lastSeen: String = "",
 	val bio: String = ""
 )

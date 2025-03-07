@@ -6,9 +6,6 @@ import com.arashdev.firechat.model.Conversation
 import com.arashdev.firechat.model.User
 import com.arashdev.firechat.service.AuthService
 import com.arashdev.firechat.service.RemoteStorageService
-import com.google.firebase.firestore.dataObjects
-import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
@@ -26,16 +23,11 @@ class ConversationsViewModel(
 			conversationList.map { conversation ->
 				//get name using contact id
 				val contactId =
-					conversation.participantIds.first { id -> id != authService.currentUserId }
-				val contactName =
-					Firebase.firestore.collection("users").document(contactId).dataObjects<User>()
-						.first()?.name
+					conversation.participantIds.first { id -> id != currentUserId }
 				val contactUser =
-					storageService.getUser(conversation.participantIds.firstOrNull { it != currentUserId }
-						.orEmpty())
-						.first()
+					storageService.getUser(contactId).first()
 				conversation.copy(
-					contactName = contactName!!,
+					contactName = contactUser?.name.orEmpty(),
 					contactPhotoBase64 = contactUser?.profilePhotoBase64.orEmpty()
 				)
 			}

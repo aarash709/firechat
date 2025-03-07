@@ -61,7 +61,6 @@ import com.arashdev.firechat.designsystem.FireChatTheme
 import com.arashdev.firechat.model.Message
 import com.arashdev.firechat.utils.formatUtcToHoursAndMinutes
 import org.koin.androidx.compose.koinViewModel
-import timber.log.Timber
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -73,19 +72,16 @@ fun ChatScreen(
 ) {
 	val messages by viewModel.messages.collectAsStateWithLifecycle()
 	val contact by viewModel.contact.collectAsStateWithLifecycle()
-	val presence by viewModel.contactPresenceStatus.collectAsStateWithLifecycle()
-	val (isOnline, lastSeen) = presence
+	val lastSeen = contact.lastSeen
 
 	var messageText by remember { mutableStateOf("") }
 
 	val listState = rememberLazyListState()
 
-	LaunchedEffect(true, presence) {
+	LaunchedEffect(true, contact) {
 		if (messages.isNotEmpty()) {
 			listState.animateScrollToItem(0)
 		}
-		Timber.e(presence.first.toString())
-		Timber.e(presence.second.toString())
 	}
 
 	Scaffold(

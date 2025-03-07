@@ -13,10 +13,11 @@ import com.arashdev.firechat.service.RemoteStorageService
 import com.arashdev.firechat.utils.getConversationId
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import java.time.Instant
 
 class ChatViewModel(
@@ -32,9 +33,33 @@ class ChatViewModel(
 		getConversationId(currentUserId = currentUserID, otherUserId = otherUserId)
 
 	val contact: StateFlow<User> = storageService
-		.getUser(otherUserId)!!
-		.mapNotNull { contact ->
-			contact
+		.getUser(otherUserId)
+		.map { contact ->
+			val targetUserConnectedStatus = storageService
+				.getUserConnectedStatus(contact!!.userId)
+				.first()
+			val targetUserLastSeenStatus = storageService
+				.getUserLastSeenStatus(contact.userId)
+				.first()
+			Timber.e(targetUserConnectedStatus.toString())
+			Timber.e(targetUserLastSeenStatus.toString())
+
+			val lastSeen = if (targetUserConnectedStatus) {
+				"Online"
+			} else {
+				buildString {
+					append("last seen")
+					append(" ")
+					append(
+						DateUtils.getRelativeTimeSpanString(
+							targetUserLastSeenStatus,
+							System.currentTimeMillis(),
+							DateUtils.SECOND_IN_MILLIS,
+						)
+					)
+				}
+			}
+			contact.copy(lastSeen = lastSeen)
 		}
 		.stateIn(
 			scope = viewModelScope,
@@ -49,33 +74,6 @@ class ChatViewModel(
 				scope = viewModelScope,
 				started = SharingStarted.WhileSubscribed(5000),
 				initialValue = listOf()
-			)
-
-	val contactPresenceStatus: StateFlow<Pair<Boolean, String>> =
-		storageService.getUserPresenceStatus(otherUserId)
-			.map {
-				val isOnline = it.first
-				val lastSeen = if (isOnline) {
-					"Online"
-				} else {
-					buildString {
-						append("last seen")
-						append(" ")
-						append(
-							DateUtils.getRelativeTimeSpanString(
-								it.second,
-								System.currentTimeMillis(),
-								DateUtils.SECOND_IN_MILLIS,
-							)
-						)
-					}
-				}
-				Pair(isOnline, lastSeen)
-			}
-			.stateIn(
-				scope = viewModelScope,
-				started = SharingStarted.WhileSubscribed(5000),
-				initialValue = Pair(false, "lase seen recently")
 			)
 
 	fun sendMessage(text: String) {

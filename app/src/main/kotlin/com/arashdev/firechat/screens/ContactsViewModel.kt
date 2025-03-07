@@ -7,11 +7,9 @@ import com.arashdev.firechat.model.User
 import com.arashdev.firechat.service.AuthService
 import com.arashdev.firechat.service.RemoteStorageService
 import com.arashdev.firechat.utils.getConversationId
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -30,42 +28,42 @@ class ContactsListViewModel(
 
 	private val currentUserId = authService.currentUserId
 
-	@OptIn(ExperimentalCoroutinesApi::class)
 	val contacts: StateFlow<List<User>> = storageService.users.map { users ->
 		// Exclude current user
-		users.filterNot { it.userId == currentUserId }
-	}.map { filteredUsers ->
-		// Create a flow for each user's presence status
+		val filteredUsers = users.filterNot { it.userId == currentUserId }
 		filteredUsers.map { user ->
-			storageService.getUserPresenceStatus(user.userId).map { presence ->
-				val isOnline = presence.first
-				val lastSeen = if (isOnline) {
-					"Online"
-				} else {
-					buildString {
-						append("last seen")
-						append(" ")
-						append(
-							DateUtils.getRelativeTimeSpanString(
-								presence.second,
-								System.currentTimeMillis(),
-								DateUtils.SECOND_IN_MILLIS,
-							)
+			Timber.e("name:${user.name}")
+			val targetUserConnectedStatus = storageService
+				.getUserConnectedStatus(user.userId)
+				.first()
+			val targetUserLastSeenStatus = storageService
+				.getUserLastSeenStatus(user.userId)
+				.first()
+			Timber.e(targetUserConnectedStatus.toString())
+			Timber.e(targetUserLastSeenStatus.toString())
+
+			val lastSeen = if (targetUserConnectedStatus) {
+				"Online"
+			} else {
+				buildString {
+					append("last seen")
+					append(" ")
+					append(
+						DateUtils.getRelativeTimeSpanString(
+							targetUserLastSeenStatus,
+							System.currentTimeMillis(),
+							DateUtils.SECOND_IN_MILLIS,
 						)
-					}
+					)
 				}
-				user.copy(userId = lastSeen)
 			}
+			user.copy(lastSeen = lastSeen)
 		}
-	}
-		.flatMapLatest { presenceFlows ->
-			// Combine all presence flows into a single flow emitting a list of UserWithPresence
-			combine(presenceFlows) { it.toList() }
-		}.stateIn(
-			scope = viewModelScope,
-			started = SharingStarted.WhileSubscribed(5000),
-			initialValue = listOf()
-		)
+	}.stateIn(
+		scope = viewModelScope,
+		started = SharingStarted.WhileSubscribed(5000),
+		initialValue = listOf()
+	)
 
 	fun createConversation(
 		otherUserId: String,
