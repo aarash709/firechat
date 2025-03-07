@@ -150,7 +150,7 @@ fun UserItem(modifier: Modifier = Modifier, user: User, onContactClick: () -> Un
 				}
 				Column(modifier = Modifier.padding(0.dp)) {
 					Text(text = user.name, fontWeight = FontWeight.Bold)
-					Text(text = user.userId, color = MaterialTheme.colorScheme.onSurfaceVariant)
+					Text(text = user.lastSeen, color = MaterialTheme.colorScheme.onSurfaceVariant)
 				}
 			}
 		}

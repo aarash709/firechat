@@ -1,5 +1,6 @@
 package com.arashdev.firechat.service
 
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import com.arashdev.firechat.model.Conversation
 import com.arashdev.firechat.model.Message
@@ -35,20 +36,49 @@ class RemoteStorageServiceImpl(private val authService: AuthService) : RemoteSto
 			.setValue(ServerValue.TIMESTAMP).await()
 	}
 
-	override fun getUserPresenceStatus(userId: String): Flow<Pair<Boolean, Long>> =
+	override fun getUserLastSeenStatus(userId: String): Flow<Long> = callbackFlow {
+		val lastSeenState = mutableLongStateOf(0L)
+
+		val lastSeenRef = database
+			.child("users")
+			.child(userId)
+			.child("lastSeen")
+
+		val lastSeenListener = object : ValueEventListener {
+			override fun onDataChange(snapshot: DataSnapshot) {
+				val lastSeen = snapshot.getValue<Long>() ?: 0L
+				lastSeenState.longValue = lastSeen
+				trySend(lastSeenState.longValue) // Emit the updated state
+				Timber.e("last seen: $lastSeen")
+			}
+
+			override fun onCancelled(error: DatabaseError) {
+				Timber.e("Last seen listener cancelled: ${error.message}")
+			}
+		}
+
+		lastSeenRef.addValueEventListener(lastSeenListener)
+
+		awaitClose {
+			lastSeenRef.removeEventListener(lastSeenListener)
+		}
+	}
+
+	override fun getUserConnectedStatus(userId: String): Flow<Boolean> =
 		callbackFlow {
-			val presence = mutableStateOf(Pair(false, 0L))
+			val isConnectedState = mutableStateOf(false)
 
 			// Firebase references for connected and lastSeen
-			val connectedRef = database.child("users").child(userId).child("connected")
-			val lastSeenRef = database.child("users").child(userId).child("lastSeen")
+			val connectedRef = database
+				.child("users")
+				.child(userId)
+				.child("connected")
 
-			// Listener for online status
 			val connectedListener = object : ValueEventListener {
 				override fun onDataChange(snapshot: DataSnapshot) {
-					val isOnline = snapshot.getValue<Boolean>() ?: false
-					presence.value = Pair(isOnline, presence.value.second)
-					trySend(presence.value) // Emit the updated state
+					val isConnected = snapshot.getValue<Boolean>() ?: false
+					isConnectedState.value = isConnected
+					trySend(isConnectedState.value) // Emit the updated state
 				}
 
 				override fun onCancelled(error: DatabaseError) {
@@ -56,27 +86,10 @@ class RemoteStorageServiceImpl(private val authService: AuthService) : RemoteSto
 				}
 			}
 
-			// Listener for last seen timestamp
-			val lastSeenListener = object : ValueEventListener {
-				override fun onDataChange(snapshot: DataSnapshot) {
-					val lastSeen = snapshot.getValue<Long>() ?: 0L
-					presence.value = Pair(presence.value.first, lastSeen)
-					trySend(presence.value) // Emit the updated state
-				}
-
-				override fun onCancelled(error: DatabaseError) {
-					Timber.e("Last seen listener cancelled: ${error.message}")
-				}
-			}
-
-			// Attach listeners
 			connectedRef.addValueEventListener(connectedListener)
-			lastSeenRef.addValueEventListener(lastSeenListener)
 
-			// Cleanup when Flow collection stops
 			awaitClose {
 				connectedRef.removeEventListener(connectedListener)
-				lastSeenRef.removeEventListener(lastSeenListener)
 			}
 		}
 

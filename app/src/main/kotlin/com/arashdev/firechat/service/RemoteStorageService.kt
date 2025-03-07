@@ -43,7 +43,9 @@ interface RemoteStorageService {
 
 	suspend fun updateUserPresenceStatus(isOnline: Boolean)
 
-	fun getUserPresenceStatus(userId: String): Flow<Pair<Boolean, Long>>
+	fun getUserConnectedStatus(userId: String): Flow<Boolean>
+
+	fun getUserLastSeenStatus(userId: String): Flow<Long>
 
 	suspend fun updateProfilePhoto(base64String: String, userId: String)
 }
