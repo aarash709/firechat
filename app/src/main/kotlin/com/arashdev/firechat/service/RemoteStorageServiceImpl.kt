@@ -10,7 +10,6 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ServerValue
 import com.google.firebase.database.ValueEventListener
-import com.google.firebase.database.getValue
 import com.google.firebase.database.ktx.database
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.SetOptions
@@ -46,7 +45,7 @@ class RemoteStorageServiceImpl(private val authService: AuthService) : RemoteSto
 
 		val lastSeenListener = object : ValueEventListener {
 			override fun onDataChange(snapshot: DataSnapshot) {
-				val lastSeen = snapshot.getValue<Long>() ?: 0L
+				val lastSeen = snapshot.getValue(Long::class.java) ?: 0L
 				lastSeenState.longValue = lastSeen
 				trySend(lastSeenState.longValue) // Emit the updated state
 				Timber.e("last seen: $lastSeen")
@@ -76,7 +75,7 @@ class RemoteStorageServiceImpl(private val authService: AuthService) : RemoteSto
 
 			val connectedListener = object : ValueEventListener {
 				override fun onDataChange(snapshot: DataSnapshot) {
-					val isConnected = snapshot.getValue<Boolean>() ?: false
+					val isConnected = snapshot.getValue(Boolean::class.java) ?: false
 					isConnectedState.value = isConnected
 					trySend(isConnectedState.value) // Emit the updated state
 				}
