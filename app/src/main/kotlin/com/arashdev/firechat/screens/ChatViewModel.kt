@@ -8,6 +8,7 @@ import androidx.navigation.toRoute
 import com.arashdev.firechat.Chat
 import com.arashdev.firechat.model.Message
 import com.arashdev.firechat.model.User
+import com.arashdev.firechat.security.EncryptionUtils
 import com.arashdev.firechat.service.AuthService
 import com.arashdev.firechat.service.RemoteStorageService
 import com.arashdev.firechat.utils.getConversationId
@@ -18,6 +19,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.security.KeyFactory
+import java.security.spec.X509EncodedKeySpec
 import java.time.Instant
 
 class ChatViewModel(
@@ -79,9 +82,17 @@ class ChatViewModel(
 	fun sendMessage(text: String) {
 		viewModelScope.launch {
 			val time = Instant.now().epochSecond //UTC
+			val publicKeyBytes = storageService.getPublicKey(userId = otherUserId)
+			val keyFactory = KeyFactory.getInstance("RSA")
+			val recipientPublicKey = keyFactory.generatePublic(X509EncodedKeySpec(publicKeyBytes))
+
+			// Encrypt message
+			val encryptedData = EncryptionUtils.encryptMessage(text, recipientPublicKey)
 			val message = Message(
-				text = text,
 				senderId = currentUserID,
+				encryptedMessage = encryptedData.encryptedMessage,
+				encryptedAesKey = encryptedData.encryptedAesKey,
+				iv = encryptedData.iv,
 				timestamp = time
 			)
 			storageService.sendMessage(
