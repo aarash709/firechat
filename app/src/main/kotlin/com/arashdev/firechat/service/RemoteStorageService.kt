@@ -4,7 +4,6 @@ import com.arashdev.firechat.model.Conversation
 import com.arashdev.firechat.model.Message
 import com.arashdev.firechat.model.User
 import kotlinx.coroutines.flow.Flow
-import java.security.PublicKey
 
 interface RemoteStorageService {
 
@@ -25,7 +24,7 @@ interface RemoteStorageService {
 		conversationId: String
 	)
 
-	suspend fun createUser(userId: String, userName: String = "", publicKey: PublicKey)
+	suspend fun createUser(userId: String, userName: String, base64PublicKey: String)
 
 	suspend fun updateUsername(userName: String, userId: String)
 
@@ -51,7 +50,7 @@ interface RemoteStorageService {
 	suspend fun updateProfilePhoto(base64String: String, userId: String)
 
 	//cryptography
-	suspend fun uploadPublicKey(userId: String, publicKey: PublicKey)
+	suspend fun uploadPublicKey(userId: String, base64PublicKey: String)
 
 	suspend fun getPublicKey(userId: String): ByteArray
 }

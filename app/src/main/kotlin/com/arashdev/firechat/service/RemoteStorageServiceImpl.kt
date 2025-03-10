@@ -21,7 +21,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import timber.log.Timber
-import java.security.PublicKey
 import java.time.Instant
 
 
@@ -159,12 +158,12 @@ class RemoteStorageServiceImpl(private val authService: AuthService) : RemoteSto
 			}.await()
 	}
 
-	override suspend fun createUser(userId: String, userName: String, publicKey: PublicKey) {
+	override suspend fun createUser(userId: String, userName: String, base64PublicKey: String) {
 		val user = User(
 			userId = userId,
-			publicKey = publicKey.encoded,
 			name = userName.ifEmpty { "Anonymous User" },
 			profilePhotoBase64 = "",
+			base64PublicKey = base64PublicKey.ifEmpty { "" },
 			createdAt = Instant.now().epochSecond, //utc
 			bio = "",
 		)
@@ -217,10 +216,9 @@ class RemoteStorageServiceImpl(private val authService: AuthService) : RemoteSto
 			.document(conversationId).get().await().id == conversationId
 	}
 
-	override suspend fun uploadPublicKey(userId: String, publicKey: PublicKey) {
-		val publicKeyBytes = publicKey.encoded // DER-encoded bytes
+	override suspend fun uploadPublicKey(userId: String, base64PublicKey: String) {
 		firestore.collection("users").document(userId).set(
-			mapOf("publicKey" to publicKeyBytes), SetOptions.merge()
+			mapOf("publicKeyBase64" to base64PublicKey), SetOptions.merge()
 		)
 	}
 
