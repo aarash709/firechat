@@ -1,6 +1,7 @@
 package com.arashdev.firechat.security
 
 import android.security.keystore.KeyProperties
+import com.arashdev.firechat.model.EncryptedData
 import java.security.PublicKey
 import java.util.Base64
 import javax.crypto.Cipher
@@ -22,7 +23,7 @@ object EncryptionUtils {
 	private val aesCipher = Cipher.getInstance(AES_TRANSFORMATION)
 	private val rsaCipher = Cipher.getInstance(RSA_TRANSFORMATION)
 
-	fun encryptMessage(message: String, recipientPublicKey: PublicKey): EncryptedMessage {
+	fun encryptMessage(message: String, recipientPublicKey: PublicKey): EncryptedData {
 		// Generate AES key
 		val aesKey = KeyManager.generateSymmetricAESKey(AES_KEY_SIZE)
 
@@ -38,30 +39,26 @@ object EncryptionUtils {
 		rsaCipher.init(Cipher.ENCRYPT_MODE, recipientPublicKey)
 		val encryptedAesKeyBytes = aesCipher.doFinal(aesKey.encoded)
 
-		return EncryptedMessage(encryptedMessageBytes, encryptedAesKeyBytes, ivBytes)
+		return EncryptedData(encryptedMessageBytes, encryptedAesKeyBytes, ivBytes)
 	}
 
 	fun decryptMessage(
-		encryptedMessage: EncryptedMessage
+		encryptedMessage: ByteArray,
+		encryptedAESKey: ByteArray,
+		iv: ByteArray,
 	): String {
 		// Decrypt AES key with RSA
 		val privateKey = KeyManager.getPrivateKey()
 		rsaCipher.init(Cipher.DECRYPT_MODE, privateKey)
-		val aesKeyBytes = rsaCipher.doFinal(encryptedMessage.encryptedAesKey)
+		val aesKeyBytes = rsaCipher.doFinal(encryptedAESKey)
 		val aesKey = SecretKeySpec(aesKeyBytes, AES_ALGORITHM)
 
-		val iv = Base64.getDecoder().decode(encryptedMessage.iv)
+		val iv = Base64.getDecoder().decode(iv)
 		// Decrypt message with AES-GCM
 		val gcmSpec = GCMParameterSpec(GCM_TAG_LENGTH * 8, iv)
 		aesCipher.init(Cipher.DECRYPT_MODE, aesKey, gcmSpec)
-		val decryptedMessage = aesCipher.doFinal(encryptedMessage.encryptedMessage)
+		val decryptedMessage = aesCipher.doFinal(encryptedMessage)
 
 		return String(decryptedMessage)
 	}
 }
-
-data class EncryptedMessage(
-	val encryptedMessage: ByteArray,
-	val encryptedAesKey: ByteArray,
-	val iv: ByteArray
-)

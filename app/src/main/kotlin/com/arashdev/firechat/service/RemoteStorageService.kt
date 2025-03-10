@@ -1,6 +1,7 @@
 package com.arashdev.firechat.service
 
 import com.arashdev.firechat.model.Conversation
+import com.arashdev.firechat.model.EncryptedMessage
 import com.arashdev.firechat.model.Message
 import com.arashdev.firechat.model.User
 import kotlinx.coroutines.flow.Flow
@@ -17,10 +18,10 @@ interface RemoteStorageService {
 
 	fun getUser(userId: String): Flow<User?>
 
-	fun observeMessages(conversationId: String): Flow<List<Message>>
+	fun observeMessages(conversationId: String): Flow<List<EncryptedMessage>>
 
 	suspend fun sendMessage(
-		message: Message,
+		encryptedMessage: EncryptedMessage,
 		conversationId: String
 	)
 

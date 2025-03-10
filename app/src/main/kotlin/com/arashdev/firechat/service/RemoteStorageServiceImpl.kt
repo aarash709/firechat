@@ -3,6 +3,7 @@ package com.arashdev.firechat.service
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import com.arashdev.firechat.model.Conversation
+import com.arashdev.firechat.model.EncryptedMessage
 import com.arashdev.firechat.model.Message
 import com.arashdev.firechat.model.User
 import com.google.firebase.auth.ktx.auth
@@ -121,19 +122,19 @@ class RemoteStorageServiceImpl(private val authService: AuthService) : RemoteSto
 		return firestore.collection(USERS_COLLECTION).document(userId).dataObjects()
 	}
 
-	override fun observeMessages(conversationId: String): Flow<List<Message>> {
+	override fun observeMessages(conversationId: String): Flow<List<EncryptedMessage>> {
 		return firestore.collection("conversations/$conversationId/messages")
 			.orderBy("timestamp", Query.Direction.ASCENDING)
 			.dataObjects()
 	}
 
 	override suspend fun sendMessage(
-		message: Message,
+		encryptedMessage: EncryptedMessage,
 		conversationId: String
 	) {
 		firestore
 			.collection("conversations/$conversationId/messages")
-			.add(message)
+			.add(encryptedMessage)
 			.addOnSuccessListener {
 				Timber.e("message sent successfully!")
 			}.addOnFailureListener {

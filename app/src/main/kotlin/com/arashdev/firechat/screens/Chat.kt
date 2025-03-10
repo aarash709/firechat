@@ -274,13 +274,9 @@ private fun BubblePreview() {
 		MessageBubble(
 			modifier = modifier,
 			message = Message(
-				id = "id",
 				text = "This is a sample text",
 				senderId = "senderid",
 				timestamp = 1739346011,
-				encryptedMessage = "",
-				encryptedAesKey = "",
-				iv = ""
 			), currentUserId = "penatibus"
 		)
 	}
