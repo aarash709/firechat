@@ -19,12 +19,6 @@ object EncryptionUtils {
 	private const val RSA_TRANSFORMATION =
 		"$RSA_ALGORITHM/$ECB_BLOCK_MODE/OAEPWithSHA-256AndMGF1Padding"
 
-	data class EncryptedMessage(
-		val encryptedMessage: ByteArray,
-		val encryptedAesKey: ByteArray,
-		val iv: ByteArray
-	)
-
 	private val aesCipher = Cipher.getInstance(AES_TRANSFORMATION)
 	private val rsaCipher = Cipher.getInstance(RSA_TRANSFORMATION)
 
@@ -65,3 +59,9 @@ object EncryptionUtils {
 		return String(decryptedMessage)
 	}
 }
+
+data class EncryptedMessage(
+	val encryptedMessage: ByteArray,
+	val encryptedAesKey: ByteArray,
+	val iv: ByteArray
+)

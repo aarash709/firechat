@@ -8,6 +8,7 @@ import androidx.navigation.toRoute
 import com.arashdev.firechat.Chat
 import com.arashdev.firechat.model.Message
 import com.arashdev.firechat.model.User
+import com.arashdev.firechat.security.EncryptedMessage
 import com.arashdev.firechat.security.EncryptionUtils
 import com.arashdev.firechat.service.AuthService
 import com.arashdev.firechat.service.RemoteStorageService
@@ -22,6 +23,7 @@ import timber.log.Timber
 import java.security.KeyFactory
 import java.security.spec.X509EncodedKeySpec
 import java.time.Instant
+import java.util.Base64
 
 class ChatViewModel(
 	private val storageService: RemoteStorageService,
@@ -72,7 +74,26 @@ class ChatViewModel(
 
 	val messages: StateFlow<List<Message>> =
 		storageService.observeMessages(conversationId = conversationId)
-			.map { it.reversed() }
+			.map {
+				it.reversed().map { message ->
+					val encryptedMessage = Base64.getDecoder().decode(message.encryptedMessage)
+					val encryptedAesKey = Base64.getDecoder().decode(message.encryptedAesKey)
+					val iv = Base64.getDecoder().decode(message.iv)
+
+					val encryptMessage = EncryptedMessage(encryptedMessage, encryptedAesKey, iv)
+
+					val text = EncryptionUtils.decryptMessage(encryptMessage)
+					Message(
+						id = message.id,
+						text = text,
+						encryptedMessage = encryptedMessage.decodeToString(),
+						encryptedAesKey = encryptedAesKey.decodeToString(),
+						iv = iv.decodeToString(),
+						senderId = "",
+						timestamp = 0,
+					)
+				}
+			}
 			.stateIn(
 				scope = viewModelScope,
 				started = SharingStarted.WhileSubscribed(5000),
@@ -83,16 +104,24 @@ class ChatViewModel(
 		viewModelScope.launch {
 			val time = Instant.now().epochSecond //UTC
 			val publicKeyBytes = storageService.getPublicKey(userId = otherUserId)
+			//to public key
 			val keyFactory = KeyFactory.getInstance("RSA")
 			val recipientPublicKey = keyFactory.generatePublic(X509EncodedKeySpec(publicKeyBytes))
 
 			// Encrypt message
-			val encryptedData = EncryptionUtils.encryptMessage(text, recipientPublicKey)
+			val encryptedMessage = EncryptionUtils.encryptMessage(
+				message = text,
+				recipientPublicKey = recipientPublicKey
+			)
+			val messageString =
+				Base64.getEncoder().encodeToString(encryptedMessage.encryptedMessage)
+			val aesKeyString = Base64.getEncoder().encodeToString(encryptedMessage.encryptedAesKey)
+			val ivString = Base64.getEncoder().encodeToString(encryptedMessage.iv)
 			val message = Message(
 				senderId = currentUserID,
-				encryptedMessage = encryptedData.encryptedMessage,
-				encryptedAesKey = encryptedData.encryptedAesKey,
-				iv = encryptedData.iv,
+				encryptedMessage = messageString,
+				encryptedAesKey = aesKeyString,
+				iv = ivString,
 				timestamp = time
 			)
 			storageService.sendMessage(
