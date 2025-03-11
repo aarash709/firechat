@@ -4,7 +4,6 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -49,7 +48,9 @@ fun LoginScreen(
 			viewModel.signInWithEmailAndPassword(email = email, password = password)
 		},
 		onNavigateToConversations = { onNavigateToConversations() },
-		onSignUp = { viewModel.signInAnonymously() }
+		onSignUp = { email, pass, name ->
+			viewModel.signupWithEmailAndPassword(email = email, password = pass, userName = name)
+		}
 	)
 }
 
@@ -58,7 +59,7 @@ fun LoginContent(
 	modifier: Modifier = Modifier,
 	uiState: AuthUiState,
 	onSignInWithEmailPassword: (String, String) -> Unit,
-	onSignUp: () -> Unit,
+	onSignUp: (String, String, String) -> Unit,
 	onNavigateToConversations: () -> Unit
 ) {
 	var name by remember { mutableStateOf("") }
@@ -84,26 +85,26 @@ fun LoginContent(
 				horizontalAlignment = Alignment.CenterHorizontally,
 				verticalArrangement = Arrangement.SpaceBetween
 			) {
-//				OutlinedTextField(
-//					value = name,
-//					enabled = isEnabled,
-//					onValueChange = { name = it },
-//					label = { Text("Name") },
-//					keyboardActions = KeyboardActions(onNext = {
-//						focusManager.moveFocus(FocusDirection.Down)
-//					}),
-//					keyboardOptions = KeyboardOptions(
-//						showKeyboardOnFocus = true,
-//						keyboardType = KeyboardType.Email,
-//						imeAction = ImeAction.Next
-//					),
-//					//				colors = TextFieldDefaults.colors(
-//					//					focusedIndicatorColor = Color.Transparent,
-//					//					errorIndicatorColor = Color.Transparent,
-//					//					disabledIndicatorColor = Color.Transparent,
-//					//					unfocusedIndicatorColor = Color.Transparent
-//					//				)
-//				)
+				OutlinedTextField(
+					value = name,
+					enabled = isEnabled,
+					onValueChange = { name = it },
+					label = { Text("Name") },
+					keyboardActions = KeyboardActions(onNext = {
+						focusManager.moveFocus(FocusDirection.Down)
+					}),
+					keyboardOptions = KeyboardOptions(
+						showKeyboardOnFocus = true,
+						keyboardType = KeyboardType.Email,
+						imeAction = ImeAction.Next
+					),
+					//				colors = TextFieldDefaults.colors(
+					//					focusedIndicatorColor = Color.Transparent,
+					//					errorIndicatorColor = Color.Transparent,
+					//					disabledIndicatorColor = Color.Transparent,
+					//					unfocusedIndicatorColor = Color.Transparent
+					//				)
+				)
 				OutlinedTextField(
 					value = email,
 					enabled = isEnabled,
@@ -181,7 +182,7 @@ fun LoginContent(
 				Text("Don`t have an account?")
 				TextButton(
 					onClick = {
-						onSignUp()
+						onSignUp(email, password, name)
 					},
 					enabled = isEnabled
 				) {
@@ -201,9 +202,10 @@ fun LoginContent(
 						}
 					}
 				}
+				// TODO: Remove anonymous sing in
 				TextButton(
 					onClick = {
-						onSignUp()
+//						onSignUp(email, password, name)
 					},
 					enabled = isEnabled
 				) {
@@ -239,7 +241,7 @@ private fun AuthPreview() {
 		LoginContent(
 			uiState = uiState,
 			onNavigateToConversations = {},
-			onSignUp = {},
+			onSignUp = { _, _, _ -> },
 			onSignInWithEmailPassword = { _, _ -> }
 		)
 	}

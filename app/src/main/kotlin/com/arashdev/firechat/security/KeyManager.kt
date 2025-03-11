@@ -18,7 +18,7 @@ object KeyManager {
 		load(null)
 	}
 
-	private fun generateKeyPair(): KeyPair {
+	fun generateKeyPair(): KeyPair {
 		val keyPairGenerator = KeyPairGenerator.getInstance(
 			KeyProperties.KEY_ALGORITHM_RSA, ANDROID_KEYSTORE
 		)
