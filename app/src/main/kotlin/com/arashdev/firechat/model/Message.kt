@@ -4,5 +4,5 @@ package com.arashdev.firechat.model
 data class Message(
 	val text: String = "",
 	val senderId: String = "",
-	val timestamp: Long = System.currentTimeMillis()
+	val timestamp: Long = 0
 )

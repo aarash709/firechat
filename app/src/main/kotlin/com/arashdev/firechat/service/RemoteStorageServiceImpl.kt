@@ -1,5 +1,6 @@
 package com.arashdev.firechat.service
 
+import android.util.Base64
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import com.arashdev.firechat.model.Conversation
@@ -164,7 +165,7 @@ class RemoteStorageServiceImpl(private val authService: AuthService) : RemoteSto
 			userId = userId,
 			name = userName.ifEmpty { "Anonymous User" },
 			profilePhotoBase64 = "",
-			base64PublicKey = base64PublicKey.ifEmpty { "" },
+			publicKeyBase64 = base64PublicKey.ifEmpty { "" },
 			createdAt = Instant.now().epochSecond, //utc
 			bio = "",
 		)
@@ -217,15 +218,16 @@ class RemoteStorageServiceImpl(private val authService: AuthService) : RemoteSto
 			.document(conversationId).get().await().id == conversationId
 	}
 
-	override suspend fun uploadPublicKey(userId: String, base64PublicKey: String) {
+	override suspend fun uploadPublicKey(userId: String, publicKeyBase64: String) {
 		firestore.collection("users").document(userId).set(
-			mapOf("publicKeyBase64" to base64PublicKey), SetOptions.merge()
+			mapOf("publicKeyBase64" to publicKeyBase64), SetOptions.merge()
 		)
 	}
 
 	override suspend fun getPublicKey(userId: String): ByteArray {
-		val key = firestore.collection("users").document(userId).get().await().get("publicKey")
-		return key as ByteArray
+		val publicKeyBase64 = firestore.collection("users").document(userId).get().await()
+			.getString("publicKeyBase64")
+		return Base64.decode(publicKeyBase64, Base64.DEFAULT)
 	}
 
 	companion object {

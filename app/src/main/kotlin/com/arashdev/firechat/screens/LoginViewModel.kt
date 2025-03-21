@@ -9,7 +9,6 @@ import com.arashdev.firechat.service.AuthService
 import com.arashdev.firechat.service.RemoteStorageService
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import java.util.Base64
 
 class LoginViewModel(
 	private val auth: AuthService,
@@ -27,7 +26,7 @@ class LoginViewModel(
 			_uiState.value = AuthUiState.Loading
 			try {
 				KeyManager.generateKeyPair()
-				val base64PublicKey = getUserPublicKeyString()
+				val base64PublicKey = KeyManager.getPublicKey()!!
 				auth.createNewAccount(email = email, password = password)
 				auth.updateDisplayName(name = userName)
 				firestore.createUser(
@@ -69,7 +68,7 @@ class LoginViewModel(
 					_uiState.value = AuthUiState.Success
 					return@launch
 				}
-				val base64PublicKey = getUserPublicKeyString()
+				val base64PublicKey = KeyManager.getPublicKey()!!
 				auth.createAnonymousAccount()
 				firestore.createUser(
 					auth.currentUserId,
@@ -81,11 +80,6 @@ class LoginViewModel(
 				_uiState.value = AuthUiState.Error(e.message ?: "Login failed")
 			}
 		}
-	}
-
-	private fun getUserPublicKeyString(): String {
-		val publicKey = KeyManager.getPublicKey()?.encoded
-		return Base64.getEncoder().encodeToString(publicKey)
 	}
 }
 

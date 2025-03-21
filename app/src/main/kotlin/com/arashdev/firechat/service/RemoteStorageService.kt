@@ -51,7 +51,7 @@ interface RemoteStorageService {
 	suspend fun updateProfilePhoto(base64String: String, userId: String)
 
 	//cryptography
-	suspend fun uploadPublicKey(userId: String, base64PublicKey: String)
+	suspend fun uploadPublicKey(userId: String, publicKeyBase64: String)
 
 	suspend fun getPublicKey(userId: String): ByteArray
 }

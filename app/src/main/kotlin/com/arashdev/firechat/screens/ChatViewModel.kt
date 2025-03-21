@@ -6,10 +6,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.arashdev.firechat.Chat
+import com.arashdev.firechat.model.EncryptedData
 import com.arashdev.firechat.model.EncryptedMessage
 import com.arashdev.firechat.model.Message
 import com.arashdev.firechat.model.User
 import com.arashdev.firechat.security.EncryptionUtils
+import com.arashdev.firechat.security.KeyManager
 import com.arashdev.firechat.service.AuthService
 import com.arashdev.firechat.service.RemoteStorageService
 import com.arashdev.firechat.utils.getConversationId
@@ -19,10 +21,10 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import java.security.KeyFactory
 import java.security.spec.X509EncodedKeySpec
 import java.time.Instant
-import java.util.Base64
 
 class ChatViewModel(
 	private val storageService: RemoteStorageService,
@@ -58,17 +60,28 @@ class ChatViewModel(
 		storageService.observeMessages(conversationId = conversationId)
 			.map {
 				it.reversed().map { encryptedMessage ->
-					val message = Base64.getDecoder().decode(encryptedMessage.encryptedMessage)
-					val encryptedAesKey =
-						Base64.getDecoder().decode(encryptedMessage.encryptedAesKey)
-					val iv = Base64.getDecoder().decode(encryptedMessage.iv)
-					//decrypt!
-					val text = EncryptionUtils.decryptMessage(message, encryptedAesKey, iv)
-					Message(
-						text = text,
-						senderId = encryptedMessage.senderId,
-						timestamp = encryptedMessage.timestamp,
+					val encryptedData = EncryptedData(
+						encryptedMessage.encryptedMessage,
+						encryptedMessage.encryptedAesKey, //encrypted with our public key
+						encryptedMessage.iv
 					)
+					if (encryptedMessage.senderId == otherUserId) {
+						val plainText = EncryptionUtils.decryptMessage(
+							encryptedData,
+							KeyManager.getPrivateKey()!!
+						)
+						Message(
+							text = plainText,
+							senderId = encryptedMessage.senderId,
+							encryptedMessage.timestamp
+						)
+					} else {
+						Message(
+							text = "lets cache messages so we can be good for now!",
+							senderId = encryptedMessage.senderId,
+							timestamp = encryptedMessage.timestamp,
+						)
+					}
 				}
 			}
 			.stateIn(
@@ -80,34 +93,32 @@ class ChatViewModel(
 	fun sendMessage(text: String) {
 		viewModelScope.launch {
 			val time = Instant.now().epochSecond //UTC
-			val publicKeyBytes = storageService.getPublicKey(userId = otherUserId)
+			val recipientPublicKeyBytes = storageService.getPublicKey(userId = otherUserId)
 			//to public key from bytearray
 			val keyFactory = KeyFactory.getInstance("RSA")
-			val recipientPublicKey = keyFactory.generatePublic(X509EncodedKeySpec(publicKeyBytes))
+			val recipientPublicKey =
+				keyFactory.generatePublic(X509EncodedKeySpec(recipientPublicKeyBytes))
 
-			// Encrypt message
+			Timber.e("Start encrypting...")
 			val encryptedMessageData = EncryptionUtils.encryptMessage(
 				message = text,
-				recipientPublicKey = recipientPublicKey
+				recipientPublicKey = recipientPublicKey,
 			)
-			//ready to send as string values
-			val messageString =
-				Base64.getEncoder().encodeToString(encryptedMessageData.encryptedMessage)
-			val aesKeyString =
-				Base64.getEncoder().encodeToString(encryptedMessageData.encryptedAesKey)
-			val ivString = Base64.getEncoder().encodeToString(encryptedMessageData.iv)
+
 			val encryptedMessage = EncryptedMessage(
 				senderId = currentUserID,
 				timestamp = time,
-				encryptedMessage = messageString,
-				encryptedAesKey = aesKeyString,
-				iv = ivString
+				encryptedMessage = encryptedMessageData.encryptedMessage,
+				encryptedAesKey = encryptedMessageData.encryptedAesKey,
+				iv = encryptedMessageData.iv
 			)
-
+			Timber.e("Sending Encrypted message...")
 			storageService.sendMessage(
 				encryptedMessage = encryptedMessage,
 				conversationId = conversationId
 			)
+			// TODO: encrypt this as well
+			Timber.e("Update conversation with plain text...")
 			updateConversation(
 				lastMessage = text,
 				timeSeconds = time,
