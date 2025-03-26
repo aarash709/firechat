@@ -42,7 +42,7 @@ class AuthServiceImpl : AuthService {
 	}
 
 	override suspend fun createNewAccount(email: String, password: String) {
-		auth.createUserWithEmailAndPassword(email, password)
+		auth.createUserWithEmailAndPassword(email, password).await()
 	}
 
 	override suspend fun deleteAccount() {

@@ -1,8 +1,10 @@
 package com.arashdev.firechat.service
 
+import android.util.Base64
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import com.arashdev.firechat.model.Conversation
+import com.arashdev.firechat.model.EncryptedMessage
 import com.arashdev.firechat.model.Message
 import com.arashdev.firechat.model.User
 import com.google.firebase.auth.ktx.auth
@@ -121,19 +123,19 @@ class RemoteStorageServiceImpl(private val authService: AuthService) : RemoteSto
 		return firestore.collection(USERS_COLLECTION).document(userId).dataObjects()
 	}
 
-	override fun observeMessages(conversationId: String): Flow<List<Message>> {
+	override fun observeMessages(conversationId: String): Flow<List<EncryptedMessage>> {
 		return firestore.collection("conversations/$conversationId/messages")
 			.orderBy("timestamp", Query.Direction.ASCENDING)
 			.dataObjects()
 	}
 
 	override suspend fun sendMessage(
-		message: Message,
+		encryptedMessage: EncryptedMessage,
 		conversationId: String
 	) {
 		firestore
 			.collection("conversations/$conversationId/messages")
-			.add(message)
+			.add(encryptedMessage)
 			.addOnSuccessListener {
 				Timber.e("message sent successfully!")
 			}.addOnFailureListener {
@@ -158,13 +160,14 @@ class RemoteStorageServiceImpl(private val authService: AuthService) : RemoteSto
 			}.await()
 	}
 
-	override suspend fun createUser(userId: String, userName: String) {
+	override suspend fun createUser(userId: String, userName: String, base64PublicKey: String) {
 		val user = User(
 			userId = userId,
 			name = userName.ifEmpty { "Anonymous User" },
 			profilePhotoBase64 = "",
+			publicKeyBase64 = base64PublicKey.ifEmpty { "" },
 			createdAt = Instant.now().epochSecond, //utc
-			bio = ""
+			bio = "",
 		)
 		firestore.collection(USERS_COLLECTION)
 			.document(userId)
@@ -213,6 +216,18 @@ class RemoteStorageServiceImpl(private val authService: AuthService) : RemoteSto
 	override suspend fun conversationExists(conversationId: String): Boolean {
 		return firestore.collection(CONVERSATIONS_COLLECTION)
 			.document(conversationId).get().await().id == conversationId
+	}
+
+	override suspend fun uploadPublicKey(userId: String, publicKeyBase64: String) {
+		firestore.collection("users").document(userId).set(
+			mapOf("publicKeyBase64" to publicKeyBase64), SetOptions.merge()
+		)
+	}
+
+	override suspend fun getPublicKey(userId: String): ByteArray {
+		val publicKeyBase64 = firestore.collection("users").document(userId).get().await()
+			.getString("publicKeyBase64")
+		return Base64.decode(publicKeyBase64, Base64.DEFAULT)
 	}
 
 	companion object {
