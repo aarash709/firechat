@@ -19,7 +19,7 @@ uiautomator = "2.3.0"
 moduleGraph = "2.9.0"
 googleGmsGoogleServices = "4.4.3"
 firebaseBom = "34.1.0"
-koin = "4.1.0"
+koin = "4.1.1"
 timber = "5.0.1"
 coil = "2.7.0"
 
