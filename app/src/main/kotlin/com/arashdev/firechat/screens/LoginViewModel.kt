@@ -4,6 +4,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.arashdev.firechat.security.KeyManager
 import com.arashdev.firechat.service.AuthService
 import com.arashdev.firechat.service.RemoteStorageService
 import kotlinx.coroutines.launch
@@ -22,12 +23,21 @@ class LoginViewModel(
 	 */
 	fun signupWithEmailAndPassword(email: String, password: String, userName: String) {
 		viewModelScope.launch {
+			_uiState.value = AuthUiState.Loading
 			try {
+				KeyManager.generateKeyPair()
+				val base64PublicKey = KeyManager.getPublicKey()!!
 				auth.createNewAccount(email = email, password = password)
 				auth.updateDisplayName(name = userName)
-				firestore.createUser(userId = auth.currentUserId, userName = userName)
+				firestore.createUser(
+					userId = auth.currentUserId,
+					userName = userName,
+					base64PublicKey = base64PublicKey
+				)
+				_uiState.value = AuthUiState.Success
 			} catch (e: Exception) {
-				Timber.e("Signup filed${e.message}")
+				Timber.e("Signup filed: ${e.message}")
+				_uiState.value = AuthUiState.Error(e.message!!)
 			}
 		}
 	}
@@ -36,8 +46,8 @@ class LoginViewModel(
 	existing user login
 	 */
 	fun signInWithEmailAndPassword(email: String, password: String) {
-		_uiState.value = AuthUiState.Loading
 		viewModelScope.launch {
+		_uiState.value = AuthUiState.Loading
 			try {
 				auth.signInWithEmailAndPassword(email = email, password = password)
 				_uiState.value = AuthUiState.Success
@@ -58,8 +68,13 @@ class LoginViewModel(
 					_uiState.value = AuthUiState.Success
 					return@launch
 				}
+				val base64PublicKey = KeyManager.getPublicKey()!!
 				auth.createAnonymousAccount()
-				firestore.createUser(auth.currentUserId) // default user name is anonymous
+				firestore.createUser(
+					auth.currentUserId,
+					base64PublicKey = base64PublicKey,
+					userName = "Anonymous User"
+				) // default user name is anonymous
 				_uiState.value = AuthUiState.Success
 			} catch (e: Exception) {
 				_uiState.value = AuthUiState.Error(e.message ?: "Login failed")
