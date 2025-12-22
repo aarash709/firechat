@@ -1,7 +1,7 @@
 [versions]
 androidGradlePlugin = "8.13.2"
 kotlin = "2.3.0"
-kotlinx-ksp = "2.3.3"
+kotlinx-ksp = "2.3.4"
 kotlinx-serialization = "1.9.0"
 kotlinx-coroutines = "1.10.2"
 composeBom = "2025.12.01"
